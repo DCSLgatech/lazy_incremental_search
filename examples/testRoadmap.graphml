@@ -1,0 +1,610 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="key0" for="edge" attr.name="length" attr.type="string" />
+  <key id="key1" for="node" attr.name="state" attr.type="string" />
+  <graph id="G" edgedefault="undirected" parse.nodeids="canonical" parse.edgeids="canonical" parse.order="nodesfirst">
+    <node id="n0">
+      <data key="key1">0.5 0.3333333333333333</data>
+    </node>
+    <node id="n1">
+      <data key="key1">0.25 0.6666666666666666</data>
+    </node>
+    <node id="n2">
+      <data key="key1">0.75 0.1111111111111111</data>
+    </node>
+    <node id="n3">
+      <data key="key1">0.125 0.4444444444444444</data>
+    </node>
+    <node id="n4">
+      <data key="key1">0.625 0.7777777777777777</data>
+    </node>
+    <node id="n5">
+      <data key="key1">0.375 0.2222222222222222</data>
+    </node>
+    <node id="n6">
+      <data key="key1">0.875 0.5555555555555556</data>
+    </node>
+    <node id="n7">
+      <data key="key1">0.0625 0.8888888888888888</data>
+    </node>
+    <node id="n8">
+      <data key="key1">0.5625 0.037037037037037035</data>
+    </node>
+    <node id="n9">
+      <data key="key1">0.3125 0.37037037037037035</data>
+    </node>
+    <node id="n10">
+      <data key="key1">0.8125 0.7037037037037037</data>
+    </node>
+    <node id="n11">
+      <data key="key1">0.1875 0.14814814814814814</data>
+    </node>
+    <node id="n12">
+      <data key="key1">0.6875 0.48148148148148145</data>
+    </node>
+    <node id="n13">
+      <data key="key1">0.4375 0.8148148148148147</data>
+    </node>
+    <node id="n14">
+      <data key="key1">0.9375 0.25925925925925924</data>
+    </node>
+    <node id="n15">
+      <data key="key1">0.03125 0.5925925925925926</data>
+    </node>
+    <node id="n16">
+      <data key="key1">0.53125 0.9259259259259258</data>
+    </node>
+    <node id="n17">
+      <data key="key1">0.28125 0.07407407407407407</data>
+    </node>
+    <node id="n18">
+      <data key="key1">0.78125 0.4074074074074074</data>
+    </node>
+    <node id="n19">
+      <data key="key1">0.15625 0.7407407407407407</data>
+    </node>
+    <node id="n20">
+      <data key="key1">0.65625 0.18518518518518517</data>
+    </node>
+    <node id="n21">
+      <data key="key1">0.40625 0.5185185185185185</data>
+    </node>
+    <node id="n22">
+      <data key="key1">0.90625 0.8518518518518517</data>
+    </node>
+    <node id="n23">
+      <data key="key1">0.09375 0.2962962962962963</data>
+    </node>
+    <node id="n24">
+      <data key="key1">0.59375 0.6296296296296297</data>
+    </node>
+    <node id="n25">
+      <data key="key1">0.34375 0.9629629629629629</data>
+    </node>
+    <node id="n26">
+      <data key="key1">0.84375 0.012345679012345678</data>
+    </node>
+    <node id="n27">
+      <data key="key1">0.21875 0.345679012345679</data>
+    </node>
+    <node id="n28">
+      <data key="key1">0.71875 0.6790123456790123</data>
+    </node>
+    <node id="n29">
+      <data key="key1">0.46875 0.12345679012345678</data>
+    </node>
+    <node id="n30">
+      <data key="key1">0.96875 0.4567901234567901</data>
+    </node>
+    <node id="n31">
+      <data key="key1">0.015625 0.7901234567901234</data>
+    </node>
+    <node id="n32">
+      <data key="key1">0.515625 0.2345679012345679</data>
+    </node>
+    <node id="n33">
+      <data key="key1">0.265625 0.5679012345679013</data>
+    </node>
+    <node id="n34">
+      <data key="key1">0.765625 0.9012345679012346</data>
+    </node>
+    <node id="n35">
+      <data key="key1">0.140625 0.04938271604938271</data>
+    </node>
+    <node id="n36">
+      <data key="key1">0.640625 0.38271604938271603</data>
+    </node>
+    <node id="n37">
+      <data key="key1">0.390625 0.7160493827160495</data>
+    </node>
+    <node id="n38">
+      <data key="key1">0.890625 0.16049382716049382</data>
+    </node>
+    <node id="n39">
+      <data key="key1">0.078125 0.49382716049382713</data>
+    </node>
+    <node id="n40">
+      <data key="key1">0.578125 0.8271604938271604</data>
+    </node>
+    <node id="n41">
+      <data key="key1">0.328125 0.2716049382716049</data>
+    </node>
+    <node id="n42">
+      <data key="key1">0.828125 0.6049382716049383</data>
+    </node>
+    <node id="n43">
+      <data key="key1">0.203125 0.9382716049382716</data>
+    </node>
+    <node id="n44">
+      <data key="key1">0.703125 0.08641975308641975</data>
+    </node>
+    <node id="n45">
+      <data key="key1">0.453125 0.41975308641975306</data>
+    </node>
+    <node id="n46">
+      <data key="key1">0.953125 0.7530864197530864</data>
+    </node>
+    <node id="n47">
+      <data key="key1">0.046875 0.19753086419753085</data>
+    </node>
+    <node id="n48">
+      <data key="key1">0.546875 0.5308641975308641</data>
+    </node>
+    <node id="n49">
+      <data key="key1">0.296875 0.8641975308641974</data>
+    </node>
+    <node id="n50">
+      <data key="key1">0.796875 0.30864197530864196</data>
+    </node>
+    <node id="n51">
+      <data key="key1">0.171875 0.6419753086419753</data>
+    </node>
+    <node id="n52">
+      <data key="key1">0.671875 0.9753086419753085</data>
+    </node>
+    <node id="n53">
+      <data key="key1">0.421875 0.024691358024691357</data>
+    </node>
+    <node id="n54">
+      <data key="key1">0.921875 0.35802469135802467</data>
+    </node>
+    <node id="n55">
+      <data key="key1">0.109375 0.691358024691358</data>
+    </node>
+    <node id="n56">
+      <data key="key1">0.609375 0.13580246913580246</data>
+    </node>
+    <node id="n57">
+      <data key="key1">0.359375 0.4691358024691358</data>
+    </node>
+    <node id="n58">
+      <data key="key1">0.859375 0.802469135802469</data>
+    </node>
+    <node id="n59">
+      <data key="key1">0.234375 0.24691358024691357</data>
+    </node>
+    <node id="n60">
+      <data key="key1">0.734375 0.5802469135802469</data>
+    </node>
+    <node id="n61">
+      <data key="key1">0.484375 0.9135802469135802</data>
+    </node>
+    <node id="n62">
+      <data key="key1">0.984375 0.06172839506172839</data>
+    </node>
+    <node id="n63">
+      <data key="key1">0.0078125 0.3950617283950617</data>
+    </node>
+    <node id="n64">
+      <data key="key1">0.5078125 0.7283950617283951</data>
+    </node>
+    <node id="n65">
+      <data key="key1">0.2578125 0.1728395061728395</data>
+    </node>
+    <node id="n66">
+      <data key="key1">0.7578125 0.5061728395061729</data>
+    </node>
+    <node id="n67">
+      <data key="key1">0.1328125 0.839506172839506</data>
+    </node>
+    <node id="n68">
+      <data key="key1">0.6328125 0.2839506172839506</data>
+    </node>
+    <node id="n69">
+      <data key="key1">0.3828125 0.6172839506172839</data>
+    </node>
+    <node id="n70">
+      <data key="key1">0.8828125 0.9506172839506172</data>
+    </node>
+    <node id="n71">
+      <data key="key1">0.0703125 0.09876543209876543</data>
+    </node>
+    <node id="n72">
+      <data key="key1">0.5703125 0.43209876543209874</data>
+    </node>
+    <node id="n73">
+      <data key="key1">0.3203125 0.7654320987654321</data>
+    </node>
+    <node id="n74">
+      <data key="key1">0.8203125 0.20987654320987653</data>
+    </node>
+    <node id="n75">
+      <data key="key1">0.1953125 0.5432098765432098</data>
+    </node>
+    <node id="n76">
+      <data key="key1">0.6953125 0.8765432098765431</data>
+    </node>
+    <node id="n77">
+      <data key="key1">0.4453125 0.32098765432098764</data>
+    </node>
+    <node id="n78">
+      <data key="key1">0.9453125 0.654320987654321</data>
+    </node>
+    <node id="n79">
+      <data key="key1">0.0390625 0.9876543209876543</data>
+    </node>
+    <node id="n80">
+      <data key="key1">0.5390625 0.00411522633744856</data>
+    </node>
+    <node id="n81">
+      <data key="key1">0.2890625 0.33744855967078186</data>
+    </node>
+    <node id="n82">
+      <data key="key1">0.7890625 0.6707818930041152</data>
+    </node>
+    <node id="n83">
+      <data key="key1">0.1640625 0.11522633744855966</data>
+    </node>
+    <node id="n84">
+      <data key="key1">0.6640625 0.44855967078189296</data>
+    </node>
+    <node id="n85">
+      <data key="key1">0.4140625 0.7818930041152262</data>
+    </node>
+    <node id="n86">
+      <data key="key1">0.9140625 0.22633744855967078</data>
+    </node>
+    <node id="n87">
+      <data key="key1">0.1015625 0.5596707818930041</data>
+    </node>
+    <node id="n88">
+      <data key="key1">0.6015625 0.8930041152263374</data>
+    </node>
+    <node id="n89">
+      <data key="key1">0.3515625 0.0411522633744856</data>
+    </node>
+    <node id="n90">
+      <data key="key1">0.8515625 0.3744855967078189</data>
+    </node>
+    <node id="n91">
+      <data key="key1">0.2265625 0.7078189300411523</data>
+    </node>
+    <node id="n92">
+      <data key="key1">0.7265625 0.1522633744855967</data>
+    </node>
+    <node id="n93">
+      <data key="key1">0.4765625 0.48559670781893</data>
+    </node>
+    <node id="n94">
+      <data key="key1">0.9765625 0.8189300411522632</data>
+    </node>
+    <node id="n95">
+      <data key="key1">0.0234375 0.2633744855967078</data>
+    </node>
+    <node id="n96">
+      <data key="key1">0.5234375 0.5967078189300411</data>
+    </node>
+    <node id="n97">
+      <data key="key1">0.2734375 0.9300411522633744</data>
+    </node>
+    <node id="n98">
+      <data key="key1">0.7734375 0.07818930041152262</data>
+    </node>
+    <node id="n99">
+      <data key="key1">0.1484375 0.4115226337448559</data>
+    </node>
+    <node id="n100">
+      <data key="key1">0.6484375 0.7448559670781892</data>
+    </node>
+    <node id="n101">
+      <data key="key1">0.3984375 0.18930041152263374</data>
+    </node>
+    <node id="n102">
+      <data key="key1">0.8984375 0.522633744855967</data>
+    </node>
+    <node id="n103">
+      <data key="key1">0.0859375 0.8559670781893003</data>
+    </node>
+    <node id="n104">
+      <data key="key1">0.5859375 0.3004115226337448</data>
+    </node>
+    <node id="n105">
+      <data key="key1">0.3359375 0.6337448559670782</data>
+    </node>
+    <node id="n106">
+      <data key="key1">0.8359375 0.9670781893004115</data>
+    </node>
+    <node id="n107">
+      <data key="key1">0.2109375 0.01646090534979424</data>
+    </node>
+    <node id="n108">
+      <data key="key1">0.7109375 0.34979423868312753</data>
+    </node>
+    <node id="n109">
+      <data key="key1">0.4609375 0.6831275720164608</data>
+    </node>
+    <node id="n110">
+      <data key="key1">0.9609375 0.12757201646090535</data>
+    </node>
+    <node id="n111">
+      <data key="key1">0.0546875 0.46090534979423864</data>
+    </node>
+    <node id="n112">
+      <data key="key1">0.5546875 0.794238683127572</data>
+    </node>
+    <node id="n113">
+      <data key="key1">0.3046875 0.23868312757201646</data>
+    </node>
+    <node id="n114">
+      <data key="key1">0.8046875 0.5720164609053499</data>
+    </node>
+    <node id="n115">
+      <data key="key1">0.1796875 0.9053497942386831</data>
+    </node>
+    <node id="n116">
+      <data key="key1">0.6796875 0.053497942386831275</data>
+    </node>
+    <node id="n117">
+      <data key="key1">0.4296875 0.38683127572016457</data>
+    </node>
+    <node id="n118">
+      <data key="key1">0.9296875 0.720164609053498</data>
+    </node>
+    <node id="n119">
+      <data key="key1">0.1171875 0.1646090534979424</data>
+    </node>
+    <node id="n120">
+      <data key="key1">0.6171875 0.4979423868312757</data>
+    </node>
+    <node id="n121">
+      <data key="key1">0.3671875 0.8312757201646089</data>
+    </node>
+    <node id="n122">
+      <data key="key1">0.8671875 0.27572016460905346</data>
+    </node>
+    <node id="n123">
+      <data key="key1">0.2421875 0.6090534979423868</data>
+    </node>
+    <node id="n124">
+      <data key="key1">0.7421875 0.9423868312757201</data>
+    </node>
+    <node id="n125">
+      <data key="key1">0.4921875 0.0905349794238683</data>
+    </node>
+    <node id="n126">
+      <data key="key1">0.9921875 0.4238683127572016</data>
+    </node>
+    <node id="n127">
+      <data key="key1">0.00390625 0.757201646090535</data>
+    </node>
+    <node id="n128">
+      <data key="key1">0.50390625 0.20164609053497942</data>
+    </node>
+    <node id="n129">
+      <data key="key1">0.25390625 0.5349794238683127</data>
+    </node>
+    <node id="n130">
+      <data key="key1">0.75390625 0.8683127572016459</data>
+    </node>
+    <node id="n131">
+      <data key="key1">0.12890625 0.3127572016460905</data>
+    </node>
+    <node id="n132">
+      <data key="key1">0.62890625 0.6460905349794238</data>
+    </node>
+    <node id="n133">
+      <data key="key1">0.37890625 0.9794238683127571</data>
+    </node>
+    <node id="n134">
+      <data key="key1">0.87890625 0.02880658436213992</data>
+    </node>
+    <node id="n135">
+      <data key="key1">0.06640625 0.3621399176954732</data>
+    </node>
+    <node id="n136">
+      <data key="key1">0.56640625 0.6954732510288065</data>
+    </node>
+    <node id="n137">
+      <data key="key1">0.31640625 0.13991769547325103</data>
+    </node>
+    <node id="n138">
+      <data key="key1">0.81640625 0.4732510288065843</data>
+    </node>
+    <node id="n139">
+      <data key="key1">0.19140625 0.8065843621399176</data>
+    </node>
+    <node id="n140">
+      <data key="key1">0.69140625 0.2510288065843621</data>
+    </node>
+    <node id="n141">
+      <data key="key1">0.44140625 0.5843621399176955</data>
+    </node>
+    <node id="n142">
+      <data key="key1">0.94140625 0.9176954732510287</data>
+    </node>
+    <node id="n143">
+      <data key="key1">0.03515625 0.06584362139917695</data>
+    </node>
+    <node id="n144">
+      <data key="key1">0.53515625 0.39917695473251025</data>
+    </node>
+    <node id="n145">
+      <data key="key1">0.28515625 0.7325102880658436</data>
+    </node>
+    <node id="n146">
+      <data key="key1">0.78515625 0.17695473251028807</data>
+    </node>
+    <node id="n147">
+      <data key="key1">0.16015625 0.5102880658436214</data>
+    </node>
+    <node id="n148">
+      <data key="key1">0.66015625 0.8436213991769546</data>
+    </node>
+    <node id="n149">
+      <data key="key1">0.41015625 0.28806584362139914</data>
+    </node>
+    <node id="n150">
+      <data key="key1">0.91015625 0.6213991769547325</data>
+    </node>
+    <node id="n151">
+      <data key="key1">0.09765625 0.9547325102880657</data>
+    </node>
+    <node id="n152">
+      <data key="key1">0.59765625 0.10288065843621398</data>
+    </node>
+    <node id="n153">
+      <data key="key1">0.34765625 0.4362139917695473</data>
+    </node>
+    <node id="n154">
+      <data key="key1">0.84765625 0.7695473251028806</data>
+    </node>
+    <node id="n155">
+      <data key="key1">0.22265625 0.2139917695473251</data>
+    </node>
+    <node id="n156">
+      <data key="key1">0.72265625 0.5473251028806584</data>
+    </node>
+    <node id="n157">
+      <data key="key1">0.47265625 0.8806584362139916</data>
+    </node>
+    <node id="n158">
+      <data key="key1">0.97265625 0.3251028806584362</data>
+    </node>
+    <node id="n159">
+      <data key="key1">0.01953125 0.6584362139917695</data>
+    </node>
+    <node id="n160">
+      <data key="key1">0.51953125 0.9917695473251028</data>
+    </node>
+    <node id="n161">
+      <data key="key1">0.26953125 0.00823045267489712</data>
+    </node>
+    <node id="n162">
+      <data key="key1">0.76953125 0.34156378600823045</data>
+    </node>
+    <node id="n163">
+      <data key="key1">0.14453125 0.6748971193415637</data>
+    </node>
+    <node id="n164">
+      <data key="key1">0.64453125 0.11934156378600823</data>
+    </node>
+    <node id="n165">
+      <data key="key1">0.39453125 0.45267489711934156</data>
+    </node>
+    <node id="n166">
+      <data key="key1">0.89453125 0.7860082304526748</data>
+    </node>
+    <node id="n167">
+      <data key="key1">0.08203125 0.23045267489711932</data>
+    </node>
+    <node id="n168">
+      <data key="key1">0.58203125 0.5637860082304527</data>
+    </node>
+    <node id="n169">
+      <data key="key1">0.33203125 0.8971193415637859</data>
+    </node>
+    <node id="n170">
+      <data key="key1">0.83203125 0.04526748971193416</data>
+    </node>
+    <node id="n171">
+      <data key="key1">0.20703125 0.3786008230452675</data>
+    </node>
+    <node id="n172">
+      <data key="key1">0.70703125 0.7119341563786008</data>
+    </node>
+    <node id="n173">
+      <data key="key1">0.45703125 0.15637860082304525</data>
+    </node>
+    <node id="n174">
+      <data key="key1">0.95703125 0.4897119341563786</data>
+    </node>
+    <node id="n175">
+      <data key="key1">0.05078125 0.8230452674897117</data>
+    </node>
+    <node id="n176">
+      <data key="key1">0.55078125 0.2674897119341564</data>
+    </node>
+    <node id="n177">
+      <data key="key1">0.30078125 0.6008230452674896</data>
+    </node>
+    <node id="n178">
+      <data key="key1">0.80078125 0.9341563786008229</data>
+    </node>
+    <node id="n179">
+      <data key="key1">0.17578125 0.0823045267489712</data>
+    </node>
+    <node id="n180">
+      <data key="key1">0.67578125 0.4156378600823045</data>
+    </node>
+    <node id="n181">
+      <data key="key1">0.42578125 0.7489711934156378</data>
+    </node>
+    <node id="n182">
+      <data key="key1">0.92578125 0.19341563786008228</data>
+    </node>
+    <node id="n183">
+      <data key="key1">0.11328125 0.5267489711934156</data>
+    </node>
+    <node id="n184">
+      <data key="key1">0.61328125 0.8600823045267488</data>
+    </node>
+    <node id="n185">
+      <data key="key1">0.36328125 0.3045267489711934</data>
+    </node>
+    <node id="n186">
+      <data key="key1">0.86328125 0.6378600823045267</data>
+    </node>
+    <node id="n187">
+      <data key="key1">0.23828125 0.97119341563786</data>
+    </node>
+    <node id="n188">
+      <data key="key1">0.73828125 0.0205761316872428</data>
+    </node>
+    <node id="n189">
+      <data key="key1">0.48828125 0.35390946502057613</data>
+    </node>
+    <node id="n190">
+      <data key="key1">0.98828125 0.6872427983539093</data>
+    </node>
+    <node id="n191">
+      <data key="key1">0.01171875 0.1316872427983539</data>
+    </node>
+    <node id="n192">
+      <data key="key1">0.51171875 0.46502057613168724</data>
+    </node>
+    <node id="n193">
+      <data key="key1">0.26171875 0.7983539094650205</data>
+    </node>
+    <node id="n194">
+      <data key="key1">0.76171875 0.242798353909465</data>
+    </node>
+    <node id="n195">
+      <data key="key1">0.13671875 0.5761316872427984</data>
+    </node>
+    <node id="n196">
+      <data key="key1">0.63671875 0.9094650205761317</data>
+    </node>
+    <node id="n197">
+      <data key="key1">0.38671875 0.05761316872427984</data>
+    </node>
+    <node id="n198">
+      <data key="key1">0.88671875 0.39094650205761317</data>
+    </node>
+    <node id="n199">
+      <data key="key1">0.07421875 0.7242798353909465</data>
+    </node>
+    <edge id="e0" source="n189" target="n0">
+      <data key="key0">0.02367923767297541</data>
+    </edge>
+  </graph>
+</graphml>

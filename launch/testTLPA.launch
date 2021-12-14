@@ -1,0 +1,23 @@
+<launch>
+
+  <!-- Arguments -->
+  <arg name="obstacles1" default="$(find lgls)/examples/room1.png" />
+  <arg name="obstacles2" default="$(find lgls)/examples/room2.png" />
+  <arg name="graph" default="$(find lgls)/examples/graph_400.graphml" />
+  <!-- <arg name="start_x" default="0.1" />
+  <arg name="start_y" default="0.1" />
+  <arg name="target_x" default="0.9" />
+  <arg name="target_y" default="0.9" /> -->
+
+  <arg name="start_x" default="0.25" />
+  <arg name="start_y" default="0.25" />
+  <!-- <arg name="target_x" default="0.75" />
+  <arg name="target_y" default="0.75" /> -->
+  <arg name="target_x" default="0.8" />
+  <arg name="target_y" default="0.8" />
+
+
+  <!-- Test Node -->
+  <node name="test" pkg="lgls" type="test_TLPAstar" respawn="false" output="screen"
+  	args="-o $(arg obstacles1) -k $(arg obstacles2) -g $(arg graph) -s $(arg start_x) $(arg start_y) -t $(arg target_x) $(arg target_y)" />
+</launch>
