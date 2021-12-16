@@ -162,26 +162,13 @@ void BLGLS::setupPreliminaries() {
     }
   }
 
-  // Additionally connect the source and target with a straight line to snap.
-  // std::pair<Edge, bool> newEdge = boost::add_edge(mSourceVertex, mTargetVertex, mGraph);
-  // mGraph[newEdge.first].setLength(
-  //     mSpace->distance(sourceState->getOMPLState(), targetState->getOMPLState()));
-  // mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-  // mGraph[newEdge.first].setCollisionStatus(CollisionStatus::Free);
-
   // Setup the event.
   mEvent->setup(&mGraph, mSourceVertex, mTargetVertex);
-
-  // Important: Note that we do not enque mSourceVertex here, rather,
-  // we call updateVertex(mSourceVertex) in solve() function.
-  // This requires a slight modification on updateVertex() to do enqueuing
-  // when mSourceVertex is the argument.
-  // This is to allow sourceVertex to change in the environment, and to use
-  // updateVertex() function more generally.
 
 }
 
 // ============================================================================
+// clear search, leave graph, remove start and goal vertices.
 void BLGLS::clear() {
   // Call the base clear
   ompl::base::Planner::clear();
@@ -204,6 +191,10 @@ void BLGLS::clear() {
   for (boost::tie(ei, ei_end) = edges(mGraph); ei != ei_end; ++ei) {
     mGraph[*ei].setEvaluationStatus(EvaluationStatus::NotEvaluated);
   }
+
+  // Remove from knn the start the the goal
+  knnGraph.remove(mSourceVertex);
+  knnGraph.remove(mTargetVertex);
 
   // Remove edges between source, target to other vertices.
   clear_vertex(mSourceVertex, mGraph);
@@ -229,7 +220,7 @@ void BLGLS::setDebugCallback(std::function<void(Graph)> callback) {
 }
 
 // ============================================================================
-ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondition& /*ptc*/) {
+ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondition& ptc) {
   // TODO (avk): Use ptc to terminate the search.
 
 
@@ -252,7 +243,7 @@ ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondi
   this->updateVertex(mSourceVertex);
 
   // Run in loop.
-  while (mPlannerStatus != PlannerStatus::Solved) {
+  while (!ptc && mPlannerStatus != PlannerStatus::Solved) {
 
     // // Claim the mutex to use graph
     // std::unique_lock<std::mutex> lck{mtx};
@@ -705,9 +696,9 @@ bool BLGLS::perceiveChanges() {
   ///    if not, then the adjacent edges are necesseraily unevaluated.      ///
   /// 2. Among the evaluated vertices, check if the CollisionStatus         ///
   ///    has changed.                                                       ///
-  /// 3. Check the adjacent edges that have been evaluated.                 ///
-  /// 4. Given that either one end vertex changed the CollisionStatus,      ///
-  ///    that edge could have been changed.                                 ///
+  ///    - Check the adjacent edges that have been evaluated.               ///
+  ///    - Given that either one end vertex changed the CollisionStatus,    ///
+  ///      the edge could have been changed.                                ///
   /////////////////////////////////////////////////////////////////////////////
   VertexIter vi, vi_end;
   for (boost::tie(vi, vi_end) = vertices(mGraph); vi != vi_end; ++vi) {
@@ -883,9 +874,6 @@ Path BLGLS::getPathToSource(Vertex u) {
 }
 
 // ============================================================================
-// TODO (avk): I should be able to set the heuristic function from the demo
-// script. Create a Heuristic Class and send it in. Have a default heuristic
-// if nothing has been set.
 double BLGLS::getGraphHeuristic(Vertex v) {
   double heuristic = mSpace->distance(
       mGraph[mTargetVertex].getState()->getOMPLState(), mGraph[v].getState()->getOMPLState());
@@ -1038,26 +1026,33 @@ CollisionStatus BLGLS::evaluateEdge(const Edge& e) {
     edgeColor =  CollisionStatus::Collision;
   }
 
-  // Proceed to the intermideate states, if passed the start and end vertices check
-  if (edgeColor != CollisionStatus::Collision)
+  if(!getSpaceInformation()->checkMotion(startState, endState))
   {
-    // Access the validity checker.
-    auto validityChecker = si_->getStateValidityChecker();
+    // Okay, this motion is not valid (checkMotion uses si stateValidityChecker)
+    // Set value to infinty
+    edgeColor =  CollisionStatus::Collision;
+  }
 
-    // Evaluate the state in between.
-    int maxSteps = 1.0 / mCollisionCheckResolution;
-    for (int multiplier = 1; multiplier < maxSteps + 1; ++multiplier) {
-      double interpolationStep = mCollisionCheckResolution * multiplier;
-      assert(interpolationStep <= 1);
-      StatePtr midVertex(new lgls::datastructures::State(mSpace));
-      mSpace->interpolate(startState, endState, interpolationStep, midVertex->getOMPLState());
-
-      if (!validityChecker->isValid(midVertex->getOMPLState())){
-        edgeColor = CollisionStatus::Collision;
-        break; // No need to check further
-      }
-    } // End For interpolation
-  } // End If passed start-end check
+  // // Proceed to the intermideate states, if passed the start and end vertices check
+  // if (edgeColor != CollisionStatus::Collision)
+  // {
+  //   // Access the validity checker.
+  //   auto validityChecker = si_->getStateValidityChecker();
+  //
+  //   // Evaluate the state in between.
+  //   int maxSteps = 1.0 / mCollisionCheckResolution;
+  //   for (int multiplier = 1; multiplier < maxSteps + 1; ++multiplier) {
+  //     double interpolationStep = mCollisionCheckResolution * multiplier;
+  //     assert(interpolationStep <= 1);
+  //     StatePtr midVertex(new lgls::datastructures::State(mSpace));
+  //     mSpace->interpolate(startState, endState, interpolationStep, midVertex->getOMPLState());
+  //
+  //     if (!validityChecker->isValid(midVertex->getOMPLState())){
+  //       edgeColor = CollisionStatus::Collision;
+  //       break; // No need to check further
+  //     }
+  //   } // End For interpolation
+  // } // End If passed start-end check
 
 
   // Now assign the edge value
@@ -1180,6 +1175,15 @@ void BLGLS::generateNewSamples(int batchSize, bool updateVertices) {
     mUniformSampler->sampleUniform(sampledState->getOMPLState());
     // mSpace->copyFromReals(sampledState->getOMPLState(), newPosition);
 
+    // Informed sampling
+    double g_hat = mSpace->distance(
+        mGraph[mSourceVertex].getState()->getOMPLState(), sampledState->getOMPLState());
+
+    double h_hat = mSpace->distance(
+        sampledState->getOMPLState(), mGraph[mTargetVertex].getState()->getOMPLState());
+
+    if (getBestPathCost() < g_hat+h_hat)
+      continue;
 
     // ================= Check validity   ====================//
     auto validityChecker = si_->getStateValidityChecker();
