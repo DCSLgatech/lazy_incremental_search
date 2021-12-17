@@ -8,6 +8,7 @@
 #include <set>      // std::set
 #include <assert.h> // debug
 
+#include <Eigen/Geometry>
 #include <boost/graph/connected_components.hpp> // connected_components
 
 using lgls::datastructures::Keys;
@@ -123,8 +124,10 @@ void BLGLS::setupPreliminaries() {
   std::vector<Vertex> nearestSource;
   std::vector<Vertex> nearestTarget;
 
+  // use knn instead of R-disc to ensure start/goal are connected sufficiently
+  knnGraph.nearestK(mSourceVertex, mKNeighbors, nearestSource);
   // Add nearest vertices around the source to the graph
-  knnGraph.nearestR(mSourceVertex, mConnectionRadius, nearestSource);
+  // knnGraph.nearestR(mSourceVertex, mConnectionRadius, nearestSource);
 
   Edge uv;
   bool edgeExists;
@@ -145,7 +148,8 @@ void BLGLS::setupPreliminaries() {
 
 
   // Add nearest vertices around the target to the graph
-  knnGraph.nearestR(mTargetVertex, mConnectionRadius, nearestTarget);
+  knnGraph.nearestK(mTargetVertex, mGoalKNeighbors, nearestTarget);
+  // knnGraph.nearestR(mTargetVertex, mConnectionRadius, nearestTarget);
 
   for (const auto& v : nearestTarget) {
     // skip the target vertex itself
@@ -168,6 +172,28 @@ void BLGLS::setupPreliminaries() {
 }
 
 // ============================================================================
+void BLGLS::freshStart() {
+
+  // Call the base clear
+  ompl::base::Planner::clear();
+
+  // Clear the queues.
+  mQueue.clear();
+  assert(mQueue.isEmpty());
+
+  mTruncated.clear();
+  assert(mTruncated.empty());
+
+  knnGraph.clear();
+  mGraph.clear();
+  mNumberOfEdgeEvaluations = 0;
+  mNumberOfVertexExpansions = 0;
+  mPlannerStatus = PlannerStatus::NotSolved;
+  OMPL_INFORM("Removed Everything");
+}
+
+
+// ============================================================================
 // clear search, leave graph, remove start and goal vertices.
 void BLGLS::clear() {
   // Call the base clear
@@ -176,6 +202,9 @@ void BLGLS::clear() {
   // Clear the queues.
   mQueue.clear();
   assert(mQueue.isEmpty());
+
+  mTruncated.clear();
+  assert(mTruncated.empty());
 
   // Reset the vertices and edges.
   VertexIter vi, vi_end;
@@ -228,6 +257,9 @@ ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondi
   // mJoined = false;
   // std::thread visualize_thread{[this]() {call_visualize(); }};
 
+  mPreempt = false;
+  mPlannerStatus = PlannerStatus::NotSolved;
+
   /// Let's see if source or target are in collision
   if (this->evaluateVertex(mSourceVertex) == CollisionStatus::Collision) {
     OMPL_INFORM("Start State is invalid.");
@@ -239,65 +271,77 @@ ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondi
     return ompl::base::PlannerStatus::INVALID_GOAL;
   }
 
+  // Sample first a batch.
+  this->generateNewSamples(mSampleMultiplier, mSampleBufferSize, false);
+
   // Initialize the search
   this->updateVertex(mSourceVertex);
 
-  // Run in loop.
-  while (!ptc && mPlannerStatus != PlannerStatus::Solved) {
+  while (!ptc && !mPreempt)
+  {
+    // Run in loop.
+    // while (mPlannerStatus != PlannerStatus::Solved) {
+    while(true) {
+      // // Claim the mutex to use graph
+      // std::unique_lock<std::mutex> lck{mtx};
+      //
+      // // Wait until finish drawing the graph
+      // cv.wait(lck);
 
-    // // Claim the mutex to use graph
-    // std::unique_lock<std::mutex> lck{mtx};
-    //
-    // // Wait until finish drawing the graph
-    // cv.wait(lck);
-
-    /// Repair the tree till the event is triggered. returns the leaf
-    Vertex triggeredLeaf;
-    if(this->computeShortestPath(triggeredLeaf))
-    {
-
-      // std::cout << "Lazy LPA* returns a path "<< triggeredLeaf << std::endl;
-      /// Evaluate along the subpath to the leaf, returns the first inconsis edge
-      Edge inconsistentEdge ;
-      bool inconsistencyExist = this->evaluatePath(triggeredLeaf,inconsistentEdge);
-
-      // std::cout << "  evauated this path "<< triggeredLeaf << std::endl;
-      // if(mCallback) mCallback(mGraph);
-      /// Let the lazy LPA* handle the inconsistency
-      if (inconsistencyExist) {
-        // Update vertices around inconsistent edge
-        Vertex u = source(inconsistentEdge, mGraph);
-        Vertex v = target(inconsistentEdge, mGraph);
-        this->updateVertex(u);
-        this->updateVertex(v);
-        // this->updateVertex(target(inconsistentEdge, mGraph));
-        // if(mCallback) mCallback(mGraph);
-        this->clearTruncatedVertices();
-        // std::cout<< "inconsistent edge found updated" <<std::endl;
-      }
-      else if (triggeredLeaf == mTargetVertex)
+      /// Repair the tree till the event is triggered. returns the leaf
+      Vertex triggeredLeaf;
+      if(this->computeShortestPath(triggeredLeaf))
       {
-        // if(mCallback) mCallback(mGraph);
 
-        // NO inconsistent edge is found,
-        // if the triggering vertex is not a goal, we need to keep growing
-        // but updating triggeredLeaf won't do anything to this vertex,
-        // since it is already consistent, Hence, propagate forward.
-          OMPL_INFORM("No inconsistent edge found. Solved!");
-          mPlannerStatus = PlannerStatus::Solved;
+        // std::cout << "Lazy LPA* returns a path "<< triggeredLeaf << std::endl;
+        /// Evaluate along the subpath to the leaf, returns the first inconsis edge
+        Edge inconsistentEdge ;
+        bool inconsistencyExist = this->evaluatePath(triggeredLeaf,inconsistentEdge);
+
+        // std::cout << "  evauated this path "<< triggeredLeaf << std::endl;
+        // if(mCallback) mCallback(mGraph);
+        /// Let the lazy LPA* handle the inconsistency
+        if (inconsistencyExist) {
+          // Update vertices around inconsistent edge
+          Vertex u = source(inconsistentEdge, mGraph);
+          Vertex v = target(inconsistentEdge, mGraph);
+          this->updateVertex(u);
+          this->updateVertex(v);
+          // this->updateVertex(target(inconsistentEdge, mGraph));
+          // if(mCallback) mCallback(mGraph);
+          this->clearTruncatedVertices();
+          // std::cout<< "inconsistent edge found updated" <<std::endl;
+        }
+        else if (triggeredLeaf == mTargetVertex)
+        {
+          // if(mCallback) mCallback(mGraph);
+
+          // NO inconsistent edge is found,
+          // if the triggering vertex is not a goal, we need to keep growing
+          // but updating triggeredLeaf won't do anything to this vertex,
+          // since it is already consistent, Hence, propagate forward.
+            OMPL_INFORM("No inconsistent edge found. Solved!");
+            mPlannerStatus = PlannerStatus::Solved;
+            break;
+        }
+
+      } else
+      {
+        // No triggering vertex exists
+        OMPL_INFORM("No Trigerring Vertex Exists in the graph");
+        // std::cout << "Vertex Expanded: " << mNumberOfVertexExpansions
+        //   << ", Edge Evaluated: "<< mNumberOfEdgeEvaluations
+        //   << ", Queue Size: " <<  mQueue.getSize() << std::endl;
+        break;
       }
 
-    } else
-    {
-      // No triggering vertex exists
-      OMPL_INFORM("No Trigerring Vertex Exists in the graph");
-      std::cout << "Vertex Expanded: " << mNumberOfVertexExpansions
-        << ", Edge Evaluated: "<< mNumberOfEdgeEvaluations
-        << ", Queue Size: " <<  mQueue.getSize() << std::endl;
-      break;
-    }
+    } // End while inner-loop
 
-  } // End while loop
+    // Add an additional batch of samples, and updates these newly added ones.
+    this->generateNewSamples(mSampleMultiplier, mSampleBufferSize, true);
+
+  }  // End while outer-loop
+
 
   // Visualization clock thread joined
   // mJoined = true;
@@ -313,11 +357,16 @@ ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondi
     this->computeGpi(mTargetVertex);
     this->setBestPathCost(mGraph[mTargetVertex].getGpi());
     pdef_->addSolutionPath(constructSolution(mSourceVertex, mTargetVertex));
+
+    OMPL_INFORM("Plan Found.");
     return ompl::base::PlannerStatus::EXACT_SOLUTION;
-  } else {
-    OMPL_INFORM("No Solution Found.");
-    return ompl::base::PlannerStatus::TIMEOUT;
   }
+  if (mPreempt) {
+    OMPL_INFORM("Planning Aborted.");
+    return ompl::base::PlannerStatus::ABORT;
+  }
+  OMPL_INFORM("Planning TIMEOUT.");
+  return ompl::base::PlannerStatus::TIMEOUT;
 }
 
 // ============================================================================
@@ -440,7 +489,8 @@ bool BLGLS::computeShortestPath(Vertex& triggeredLeafVertex) {
       // if (mEvent->isTriggered(s)) {
 
       // TODO: Make sure ConstantDepthEvent checks along the current best path.
-      if( mEvent->isTriggered(obtainPath(s)) ) {
+      if(mGraph[s].getGpi() < std::numeric_limits<double>::infinity()
+          && mEvent->isTriggered(obtainPath(s)) ) {
         triggeredLeafVertex = s;
 
         // Vertex Expansion timer off before exit
@@ -880,6 +930,51 @@ double BLGLS::getGraphHeuristic(Vertex v) {
   return heuristic;
 }
 
+// ============================================================================
+// void BLGLS::setSpaceInformation(const ompl::base::SpaceInformationPtr& si) {
+//   si_ = si;
+//   mSpace = si->getStateSpace();
+// }
+
+// ============================================================================
+void BLGLS::setKNeighbors(int num_neighbors) {
+  mKNeighbors = num_neighbors;
+}
+
+// ============================================================================
+void BLGLS::setGoalKNeighbors(int num_neighbors) {
+  mGoalKNeighbors = num_neighbors;
+}
+
+// ============================================================================
+int BLGLS::getKNeighbors() {
+  return mKNeighbors;
+}
+
+// ============================================================================
+int BLGLS::getGoalKNeighbors() {
+  return mGoalKNeighbors;
+}
+
+// ============================================================================
+void BLGLS::setSampleMultiplier(double sample_mul) {
+  mSampleMultiplier = sample_mul;
+}
+
+// ============================================================================
+double BLGLS::getSampleMultiplier() {
+  return mSampleMultiplier;
+}
+
+// ============================================================================
+void BLGLS::setSampleBufferSize(double buffer) {
+  mSampleBufferSize = buffer;
+}
+
+// ============================================================================
+double BLGLS::getSampleBufferSize() {
+  return mSampleBufferSize;
+}
 // TODO: depreciate this, since we are using calculateR func
 // ============================================================================
 void BLGLS::setConnectionRadius(double radius) {
@@ -1249,6 +1344,118 @@ void BLGLS::generateNewSamples(int batchSize, bool updateVertices) {
   OMPL_INFORM("A new batch of %d samples generated",batchSize);
 }
 
+// ============================================================================
+void BLGLS::generateNewSamples(double sample_multiplier, double buffer, bool updateVertices) {
+
+  std::vector<double> sourcePosition;
+  std::vector<double> targetPosition;
+  mSpace->copyToReals(sourcePosition, mGraph[mSourceVertex].getState()->getOMPLState());
+  mSpace->copyToReals(targetPosition, mGraph[mTargetVertex].getState()->getOMPLState());
+
+  // Find euc dist but cut off w
+  Eigen::Vector2d sourceVect = Eigen::Vector2d(sourcePosition.data());
+  Eigen::Vector2d targetVect = Eigen::Vector2d(targetPosition.data());
+
+  double euc_dist = this->getGraphHeuristic(mSourceVertex);
+
+  // Setup
+  Eigen::Rotation2D<double> rot90Clock(-M_PI / 2);
+  Eigen::Rotation2D<double> rot90CounterClock(M_PI / 2);
+
+  // Define origin x_axis/y_axis vectors for sampling points in rectangle
+  Eigen::Vector2d buffSource = (1 + buffer / euc_dist) * (sourceVect - targetVect) + targetVect;
+  Eigen::Vector2d x_axis = (1 + 2 * buffer / euc_dist) * (targetVect - sourceVect);
+  Eigen::Vector2d y_axis = rot90CounterClock.toRotationMatrix() * x_axis;
+  Eigen::Vector2d bottom_v = rot90Clock.toRotationMatrix() * x_axis;
+  Eigen::Vector2d origin = buffSource + 0.5 * bottom_v;
+  double zmin = -M_PI;
+  double zmax = M_PI;
+
+  // Sample points inside the space.
+  int minBatchSize = 100;
+  int batchSize = std::floor(sample_multiplier * euc_dist) > minBatchSize ? std::floor(sample_multiplier * euc_dist) : minBatchSize;
+
+  StatePtr sampledState(new lgls::datastructures::State(mSpace));
+
+  auto validityChecker = si_->getStateValidityChecker();
+
+  // Vertices to be updated if updateVertices is set True
+  std::vector<Vertex> verticesTobeUpdated;
+
+
+  // Scale to required limits.
+  int numSampled = 0;
+  // mOnlineVertices.reserve(mOnlineVertices.size() + batchSize);
+  while (numSampled < batchSize) {
+
+    // assert ReedsShepp
+    std::vector<double> newPosition = mHaltonSequence->sample();
+
+    // Scale the halton sample to between the limits.
+    Eigen::Vector2d nPosition = Eigen::Vector2d(newPosition.data());
+    nPosition = origin + nPosition[0] * x_axis + nPosition[1] * y_axis;
+    newPosition = std::vector<double>{
+        &nPosition[0], nPosition.data() + nPosition.cols() * nPosition.rows()};
+
+    if (newPosition.size()>2)
+      newPosition[2] = zmin + (zmax - zmin) * newPosition[2];
+
+    mSpace->copyFromReals(sampledState->getOMPLState(), newPosition);
+
+    // ================= Check validity   ====================//
+    if(!validityChecker->isValid(sampledState->getOMPLState()))
+      continue;
+
+
+    // Since we have a valid sample, increment the numSampled.
+    numSampled++;
+
+    // Create a new vertex in the graph.
+    Vertex sampleVertex = boost::add_vertex(mGraph);
+    mGraph[sampleVertex].setState(sampledState);
+    mGraph[sampleVertex].setEvaluationStatus(EvaluationStatus::Evaluated);
+    mGraph[sampleVertex].setCollisionStatus(CollisionStatus::Free);
+    // Do we need to assign default values?
+
+    // 3. Connect edges
+    std::vector<Vertex> nearestSamples;
+    // knnGraph.nearestR(sampleVertex, mConnectionRadius, nearestSamples);
+    knnGraph.nearestK(sampleVertex, mKNeighbors, nearestSamples);
+    // std::cout << "Found " << nearestSamples.size() << "neighors" <<std::endl;
+    for (const auto& v : nearestSamples) {
+      // No need to assign distance, we are not using any edge heuristic.
+
+      std::pair<Edge, bool> newEdge = boost::add_edge(sampleVertex, v, mGraph);
+      double distance = mSpace->distance(
+          mGraph[v].getState()->getOMPLState(), mGraph[sampleVertex].getState()->getOMPLState());
+      mGraph[newEdge.first].setLength(distance);
+      mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+
+      assert(newEdge.second);
+    }
+
+    knnGraph.add(sampleVertex);
+    verticesTobeUpdated.push_back(sampleVertex);
+  }
+
+  // Update newly added vertices
+  if (updateVertices)
+  {
+    // Now update the vertices
+    for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it) {
+      this->updateVertex(*it);
+    }
+    // Okay, there is some change, we should re-solve it.
+    // mPlannerStatus = PlannerStatus::NotSolved;
+    //
+    // pdef_->clearSolutionPaths();
+  }
+
+  this->clearTruncatedVertices();
+  OMPL_INFORM("Added %d %d samples", numSampled, getSpaceInformation()->getStateDimension());
+}
+
+// ============================================================================
 double BLGLS::calculateR() const
 {
     // Cast to double for readability. (?)
@@ -1266,6 +1473,10 @@ double BLGLS::calculateR() const
            std::pow(std::log(graphCardinality) / graphCardinality, 1.0 / stateDimension);
 }
 
+// ============================================================================
+void BLGLS::abortPlanning() {
+  mPreempt = true;
+}
 
 // ============================================================================
 void BLGLS::call_visualize()

@@ -108,19 +108,27 @@ install(TARGETS test_BLGLS_inc RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINAT
 # Installation
 #================================================================================
 
-install(TARGETS lgls EXPORT lglsConfig
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+# install(TARGETS lgls EXPORT lglsConfig
+#  ARCHIVE DESTINATION lib
+#  LIBRARY DESTINATION lib
+#  RUNTIME DESTINATION bin
+#  )
+
+#install(DIRECTORY include/ DESTINATION include)
+
+## This makes the project importable from the install directory
+# install(EXPORT lglsConfig DESTINATION share/lgls/cmake)
+
+## This makes the project importable from the build directory
+# export(TARGETS lgls FILE lglsConfig.cmake)
+
+install(TARGETS lgls EXPORT
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
 
 install(DIRECTORY include/ DESTINATION include)
-
-# This makes the project importable from the install directory
-install(EXPORT lglsConfig DESTINATION share/lgls/cmake)
-
-# This makes the project importable from the build directory
-export(TARGETS lgls FILE lglsConfig.cmake)
 
 # Install the package.xml file (to satisfy REP-136).
 install(FILES "package.xml"

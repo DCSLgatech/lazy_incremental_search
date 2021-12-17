@@ -72,6 +72,8 @@ public:
   /// Clear the planner setup.
   void clear() override;
 
+  void freshStart();
+
   /// Set the event to be used by BLGLS.
   /// \param[in] event Event that defines the trigger condition.
   void setEvent(lgls::event::EventPtr event);
@@ -79,8 +81,32 @@ public:
   /// Returns the event used by the algorithm.
   lgls::event::ConstEventPtr getEvent() const;
 
+  /// Set the K neighbors for all nodes.
+  void setKNeighbors(int num_neighbors);
+
+  /// Set the K neighbors for connecting target.
+  void setGoalKNeighbors(int num_neighbors);
+
+  /// Set number of samples to take per sample call.
+  void setSampleMultiplier(double sample_mul);
+
+  /// Set Buffer size.
+  void setSampleBufferSize(double buffer);
+
   /// Set the connection radius of the graph.
   void setConnectionRadius(double radius);
+
+  /// Get mKNeighbors.
+  int getKNeighbors();
+
+  /// Get mKNeighbors.
+  int getGoalKNeighbors();
+
+  /// Get number of samples to take per sample call.
+  double getSampleMultiplier();
+
+  /// Get Buffer size.
+  double getSampleBufferSize();
 
   /// Get the connection radius of the graph.
   double getConnectionRadius();
@@ -136,6 +162,8 @@ public:
   /// Sample a rectangle between start and goal using Halton sampling
   void generateNewSamples(int batchSize, bool updateVertices);
 
+  void generateNewSamples(double sample_multiplier, double buffer, bool updateVertices);
+
   /// Generate a halton sample at the given index.
   std::vector<double> haltonSample(std::size_t index) const; // depreciated
 
@@ -152,6 +180,9 @@ public:
   lgls::datastructures::Graph getGraph(){return mGraph;};
 
   lgls::datastructures::Path getPath();
+
+  /// Aborts planning
+  void abortPlanning();
 
 private:
   /// Adds source and target vertices, and relevant edges to \c mGraph.
@@ -219,6 +250,21 @@ private:
   /// Connection radius in the graph.
   double mConnectionRadius;
 
+  /// Number of K nearest neighbors to connect nodes.
+  int mKNeighbors;
+
+  /// Number of K nearest neighbors to connect to target.
+  int mGoalKNeighbors;
+
+  /// Number of times sampled called in a plan call.
+  int mNumSampleCalls;
+
+  /// Distance to increase all sides of rectangle on resample.
+  double mSampleBufferSize;
+
+  /// mSampleMultiplier * distance_between_start_goal = Num Samples
+  double mSampleMultiplier;
+
   /// Collision checking resolution for the edge.
   double mCollisionCheckResolution;
 
@@ -227,6 +273,9 @@ private:
 
   /// Best path cost so far found.
   double mBestPathCost{std::numeric_limits<double>::infinity()};
+
+  /// Whether or not to stop planning.
+  bool mPreempt;
 
   /// Flag to check if the planner succeeded.
   PlannerStatus mPlannerStatus{PlannerStatus::NotSolved};
