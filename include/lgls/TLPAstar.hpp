@@ -71,8 +71,20 @@ public:
   /// Clear the planner setup.
   void clear() override;
 
+  /// Set the K neighbors for all nodes.
+  void setKNeighbors(int num_neighbors);
+
+  /// Set the K neighbors for connecting target.
+  void setGoalKNeighbors(int num_neighbors);
+
   /// Set the connection radius of the graph.
   void setConnectionRadius(double radius);
+
+  /// Get mKNeighbors.
+  int getKNeighbors();
+
+  /// Get mKNeighbors.
+  int getGoalKNeighbors();
 
   /// Get the connection radius of the graph.
   double getConnectionRadius();
@@ -200,6 +212,12 @@ private:
   /// Connection radius in the graph.
   double mConnectionRadius;
 
+  /// Number of K nearest neighbors to connect nodes.
+  int mKNeighbors;
+
+  /// Number of K nearest neighbors to connect to target.
+  int mGoalKNeighbors;
+  
   /// Collision checking resolution for the edge.
   double mCollisionCheckResolution;
 

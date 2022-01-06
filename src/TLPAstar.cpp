@@ -125,8 +125,10 @@ void TLPAstar::setupPreliminaries() {
   std::vector<Vertex> nearestSource;
   std::vector<Vertex> nearestTarget;
 
+  // use knn instead of R-disc to ensure start/goal are connected sufficiently
+  knnGraph.nearestK(mSourceVertex, mKNeighbors, nearestSource);
   // Add nearest vertices around the source to the graph
-  knnGraph.nearestR(mSourceVertex, mConnectionRadius, nearestSource);
+  // knnGraph.nearestR(mSourceVertex, mConnectionRadius, nearestSource);
 
   Edge uv;
   bool edgeExists;
@@ -145,9 +147,10 @@ void TLPAstar::setupPreliminaries() {
     }
   }
 
-
   // Add nearest vertices around the target to the graph
-  knnGraph.nearestR(mTargetVertex, mConnectionRadius, nearestTarget);
+  knnGraph.nearestK(mTargetVertex, mGoalKNeighbors, nearestTarget);
+  // Add nearest vertices around the target to the graph
+  // knnGraph.nearestR(mTargetVertex, mConnectionRadius, nearestTarget);
 
   for (const auto& v : nearestTarget) {
     // skip the target vertex itself
@@ -340,7 +343,7 @@ void TLPAstar::computeShortestPath() {
     //printVertex(s);
 
     // Count the number of expansion
-    mNumberOfVertexExpansions++;
+    // mNumberOfVertexExpansions++;
 
     // Check truncated termination condition
     //std::cout << "T2: ";
@@ -368,7 +371,7 @@ void TLPAstar::computeShortestPath() {
       //std::cout << "Overconsistent! Make " << s << " consistent, update neighbors." << std::endl;
 
       // Count the number of expansion
-      // mNumberOfVertexExpansions++;
+      mNumberOfVertexExpansions++;
 
       // Now update the sucessor vertices
       NeighborIter ni, ni_end;
@@ -402,7 +405,10 @@ void TLPAstar::computeShortestPath() {
         for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni)
           this->updateVertex(*ni);
 
-        }//End else no truncation underconsistent case
+        mNumberOfVertexExpansions++;
+      }//End else no truncation underconsistent case
+
+
     }// End else underconsistent cases
 
     auto toc = std::chrono::high_resolution_clock::now();
@@ -653,6 +659,26 @@ double TLPAstar::getGraphHeuristic(Vertex v) {
   double heuristic = mSpace->distance(
       mGraph[mTargetVertex].getState()->getOMPLState(), mGraph[v].getState()->getOMPLState());
   return heuristic;
+}
+
+// ============================================================================
+void TLPAstar::setKNeighbors(int num_neighbors) {
+  mKNeighbors = num_neighbors;
+}
+
+// ============================================================================
+void TLPAstar::setGoalKNeighbors(int num_neighbors) {
+  mGoalKNeighbors = num_neighbors;
+}
+
+// ============================================================================
+int TLPAstar::getKNeighbors() {
+  return mKNeighbors;
+}
+
+// ============================================================================
+int TLPAstar::getGoalKNeighbors() {
+  return mGoalKNeighbors;
 }
 
 // ============================================================================
@@ -931,7 +957,7 @@ void TLPAstar::generateNewSamples(int batchSize, bool updateVertices) {
 
   // Update radius
   double connectionRadius = this->calculateR();
-  std::cout << "current Connection Raidus: " << connectionRadius << std::endl;
+  // std::cout << "current Connection Raidus: " << connectionRadius << std::endl;
 
   // Now Connect edges
   for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it)
