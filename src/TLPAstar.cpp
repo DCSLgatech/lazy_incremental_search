@@ -336,10 +336,10 @@ void TLPAstar::computeShortestPath() {
     }
 
     // Pop front vertex from the queue
-    // Vertex s = mQueue.popTopVertex();
+    Vertex s = mQueue.popTopVertex();
 
     // Don't pop yet,
-    Vertex s = mQueue.getTopVertex();
+    // Vertex s = mQueue.getTopVertex();
     //std::cout << "Pop ";
     //printVertex(s);
 
@@ -364,7 +364,7 @@ void TLPAstar::computeShortestPath() {
     }
 
     // Now remove the top vertex from the queue
-    mQueue.removeVertex(s);
+    // mQueue.removeVertex(s);
 
     if (mGraph[s].getCostToCome() > mGraph[s].getRHS()) {
       // Make it consistent
