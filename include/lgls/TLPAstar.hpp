@@ -131,6 +131,8 @@ public:
   /// Sample a rectangle between start and goal using Halton sampling
   void generateNewSamples(int batchSize, bool updateVertices);
 
+  void generateNewSamples(double sample_multiplier, double buffer, bool updateVertices);
+
   /// Get current number of samples
   int getNumberOfVertices() {return  boost::num_vertices(mGraph);};
 
@@ -217,7 +219,7 @@ private:
 
   /// Number of K nearest neighbors to connect to target.
   int mGoalKNeighbors;
-  
+
   /// Collision checking resolution for the edge.
   double mCollisionCheckResolution;
 

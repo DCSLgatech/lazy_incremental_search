@@ -8,6 +8,7 @@
 #include <set>      // std::set
 #include <assert.h> // debug
 
+#include <Eigen/Geometry> // For generating samples in rotated frame 
 #include <boost/graph/connected_components.hpp> // connected_components
 
 using lgls::datastructures::Keys;
@@ -997,6 +998,128 @@ void TLPAstar::generateNewSamples(int batchSize, bool updateVertices) {
   OMPL_INFORM("A new batch of %d samples generated",batchSize);
 }
 
+// ============================================================================
+void TLPAstar::generateNewSamples(double sample_multiplier, double buffer, bool updateVertices) {
+
+  std::vector<double> sourcePosition;
+  std::vector<double> targetPosition;
+  mSpace->copyToReals(sourcePosition, mGraph[mSourceVertex].getState()->getOMPLState());
+  mSpace->copyToReals(targetPosition, mGraph[mTargetVertex].getState()->getOMPLState());
+
+  // Find euc dist but cut off w
+  Eigen::Vector2d sourceVect = Eigen::Vector2d(sourcePosition.data());
+  Eigen::Vector2d targetVect = Eigen::Vector2d(targetPosition.data());
+
+  double euc_dist = this->getGraphHeuristic(mSourceVertex);
+
+  // Setup
+  Eigen::Rotation2D<double> rot90Clock(-M_PI / 2);
+  Eigen::Rotation2D<double> rot90CounterClock(M_PI / 2);
+
+  // Define origin x_axis/y_axis vectors for sampling points in rectangle
+  Eigen::Vector2d buffSource = (1 + buffer / euc_dist) * (sourceVect - targetVect) + targetVect;
+  Eigen::Vector2d x_axis = (1 + 2 * buffer / euc_dist) * (targetVect - sourceVect);
+  Eigen::Vector2d y_axis = rot90CounterClock.toRotationMatrix() * x_axis;
+  Eigen::Vector2d bottom_v = rot90Clock.toRotationMatrix() * x_axis;
+  Eigen::Vector2d origin = buffSource + 0.5 * bottom_v;
+  double zmin = -M_PI;
+  double zmax = M_PI;
+
+  // Sample points inside the space.
+  // int minBatchSize = 100;
+  // int batchSize = std::floor(sample_multiplier * euc_dist) > minBatchSize ? std::floor(sample_multiplier * euc_dist) : minBatchSize;
+  int batchSize = sample_multiplier*100;
+
+  auto validityChecker = si_->getStateValidityChecker();
+
+  // Vertices to be updated if updateVertices is set True
+  std::vector<Vertex> verticesTobeUpdated;
+
+
+  // Scale to required limits.
+  int numSampled = 0;
+  // mOnlineVertices.reserve(mOnlineVertices.size() + batchSize);
+  while (numSampled < batchSize) {
+
+    StatePtr sampledState(new lgls::datastructures::State(mSpace));
+
+    // assert ReedsShepp
+    std::vector<double> newPosition = mHaltonSequence->sample();
+
+    // Scale the halton sample to between the limits.
+    Eigen::Vector2d nPosition = Eigen::Vector2d(newPosition.data());
+    nPosition = origin + nPosition[0] * x_axis + nPosition[1] * y_axis;
+    newPosition = std::vector<double>{
+        &nPosition[0], nPosition.data() + nPosition.cols() * nPosition.rows()};
+
+    if (newPosition.size()>2)
+      newPosition[2] = zmin + (zmax - zmin) * newPosition[2];
+
+    mSpace->copyFromReals(sampledState->getOMPLState(), newPosition);
+
+    // ================= Check validity   ====================//
+    if(!validityChecker->isValid(sampledState->getOMPLState()))
+      continue;
+
+
+    // Since we have a valid sample, increment the numSampled.
+    numSampled++;
+
+    // Create a new vertex in the graph.
+    Vertex sampleVertex = boost::add_vertex(mGraph);
+    mGraph[sampleVertex].setState(sampledState);
+    mGraph[sampleVertex].setEvaluationStatus(EvaluationStatus::Evaluated);
+    mGraph[sampleVertex].setCollisionStatus(CollisionStatus::Free);
+    // Do we need to assign default values?
+
+    knnGraph.add(sampleVertex);
+    verticesTobeUpdated.push_back(sampleVertex);
+
+  } // add vertices
+
+  // double connectionRadius = this->calculateR();
+  // 3. Connect edges
+  std::vector<Vertex> nearestSamples;
+  for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it)
+  {
+    // Collect near samples
+    nearestSamples.clear();
+    knnGraph.nearestK(*it, mKNeighbors, nearestSamples);
+    // knnGraph.nearestR(*it, connectionRadius, nearestSamples);
+
+    // std::cout << "connecting "<<*it << " with: ";
+    for (const auto& v : nearestSamples) {
+      if(*it==v) continue;
+      // std::cout << v << ", ";
+      double distance = mSpace->distance(
+          mGraph[v].getState()->getOMPLState(), mGraph[*it].getState()->getOMPLState());
+      std::pair<Edge, bool> newEdge = boost::add_edge(*it, v, mGraph);
+      mGraph[newEdge.first].setLength(distance);
+      mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+      assert(newEdge.second);
+    }
+    // std::cout << std::endl;
+
+  }
+
+  // Update newly added vertices
+  if (updateVertices)
+  {
+    // Now update the vertices
+    for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it) {
+      this->updateVertex(*it);
+    }
+    // Okay, there is some change, we should re-solve it.
+    mPlannerStatus = PlannerStatus::NotSolved;
+    //
+    // pdef_->clearSolutionPaths();
+  }
+
+  this->clearTruncatedVertices();
+  OMPL_INFORM("Added %d %dD samples", numSampled, getSpaceInformation()->getStateDimension());
+}
+
+// ============================================================================
 double TLPAstar::calculateR() const
 {
     // Cast to double for readability. (?)

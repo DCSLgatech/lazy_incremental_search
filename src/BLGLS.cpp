@@ -1314,7 +1314,7 @@ void BLGLS::generateNewSamples(double sample_multiplier, double buffer, bool upd
   // Sample points inside the space.
   // int minBatchSize = 100;
   // int batchSize = std::floor(sample_multiplier * euc_dist) > minBatchSize ? std::floor(sample_multiplier * euc_dist) : minBatchSize;
-  int batchSize = 100;
+  int batchSize = sample_multiplier*100;
 
   auto validityChecker = si_->getStateValidityChecker();
 
@@ -1363,6 +1363,7 @@ void BLGLS::generateNewSamples(double sample_multiplier, double buffer, bool upd
 
   } // add vertices
 
+  // double connectionRadius = this->calculateR();
   // 3. Connect edges
   std::vector<Vertex> nearestSamples;
   for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it)
@@ -1370,6 +1371,8 @@ void BLGLS::generateNewSamples(double sample_multiplier, double buffer, bool upd
     // Collect near samples
     nearestSamples.clear();
     knnGraph.nearestK(*it, mKNeighbors, nearestSamples);
+    // knnGraph.nearestR(*it, connectionRadius, nearestSamples);
+
     // std::cout << "connecting "<<*it << " with: ";
     for (const auto& v : nearestSamples) {
       if(*it==v) continue;
