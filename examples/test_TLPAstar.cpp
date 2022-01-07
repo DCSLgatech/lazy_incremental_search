@@ -356,13 +356,16 @@ int main(int argc, char* argv[]) {
   planner.setConnectionRadius(0.04);
   planner.setCollisionCheckResolution(0.1);
   planner.setRoadmap(graphLocation);
-  planner.setTruncationFactor(1.44);
-
+  //
+  planner.setTruncationFactor(1.5);
+  planner.setKNeighbors(30);
+  planner.setGoalKNeighbors(20);
 
   planner.setup();
   planner.setProblemDefinition(pdef);
 
   // planner.generateNewSamples(400,false);
+  // planner.generateNewSamples(3, 2, false);
 
   // Solve the motion planning problem
   ompl::base::PlannerStatus status;
