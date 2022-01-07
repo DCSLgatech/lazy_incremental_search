@@ -355,7 +355,7 @@ void TLPAstar::computeShortestPath() {
     if (mGraph[mTargetVertex].getGpi() <= mTruncationFactor
           *(std::min(mGraph[s].getCostToCome(),mGraph[s].getRHS())+this->getGraphHeuristic(s) ) )
     {
-      //std::cout << "T2! TLPA* terminated before expanding vertex " << s << std::endl;
+      std::cout << "T2! TLPA* terminated before expanding vertex " << s << std::endl;
       // Vertex Expansion timer off before exit
       auto toc = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(toc - tic);
@@ -392,7 +392,7 @@ void TLPAstar::computeShortestPath() {
       if(mGraph[s].getGpi() + this->getGraphHeuristic(s)
          <= mTruncationFactor*(mGraph[s].getCostToCome()+this->getGraphHeuristic(s) ) )
       {
-        //std::cout << "T1! Did not expand vertex " << s << std::endl;
+        std::cout << "T1! Did not expand vertex " << s << std::endl;
         mTruncated.insert(s);
       }
       else
@@ -646,7 +646,7 @@ bool TLPAstar::perceiveChanges() {
       // Need this to properly update vertices
       this->clearTruncatedVertices();
 
-      std::size_t beforePerception = mQueue.getSize();
+      int beforePerception =  static_cast<int>(mQueue.getSize());
       // Now update the vertices
       for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it) {
 
@@ -657,7 +657,7 @@ bool TLPAstar::perceiveChanges() {
         this->updateVertex(*it);
       }
 
-      std::cout << "ADDED " << mQueue.getSize()-beforePerception << "vertices into the queue" <<std::endl;
+      std::cout << "ADDED " << static_cast<int>(mQueue.getSize())-beforePerception << " vertices into the queue" <<std::endl;
       // Okay, there is some change, we should re-solve it.
       isChanged = true;
 
