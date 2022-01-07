@@ -560,30 +560,27 @@ bool TLPAstar::perceiveChanges() {
     for (boost::tie(vi, vi_end) = vertices(mGraph); vi != vi_end; ++vi) {
 
       // Go through each vertex, to detect whether this has been changed.
-      // No need to check vertices that were not evaluated
-      if (mGraph[*vi].getEvaluationStatus() == EvaluationStatus::Evaluated)
+      CollisionStatus oldStartColor = mGraph[*vi].getCollisionStatus();
+
+      if (this->evaluateVertex(*vi) != oldStartColor )
       {
-        CollisionStatus oldStartColor = mGraph[*vi].getCollisionStatus();
-        if (this->evaluateVertex(*vi) != oldStartColor )
+        // Yes, this vertex is different than before.
+        // Therefore all the incident edges need to be checked.
+        // Collect all incident edges.
+        NeighborIter ni, ni_end;
+        for (boost::tie(ni, ni_end) = adjacent_vertices(*vi, mGraph); ni != ni_end; ++ni)
         {
-          // Yes, this vertex is different than before.
-          // Therefore all the incident edges need to be checked.
-          // Collect all incident edges.
-          NeighborIter ni, ni_end;
-          for (boost::tie(ni, ni_end) = adjacent_vertices(*vi, mGraph); ni != ni_end; ++ni)
-          {
 
-            Vertex u = *ni;
-            // Get the edge between the two vertices.
-            Edge edge = this->getEdge(u, *vi);
-            if(mGraph[edge].getEvaluationStatus() == EvaluationStatus::Evaluated)
-              perceivedChangedEdges.push_back(edge);
+          Vertex u = *ni;
+          // Get the edge between the two vertices.
+          Edge edge = this->getEdge(u, *vi);
 
-          }//End For neighboring edges
+          perceivedChangedEdges.push_back(edge);
 
-        } //End If vertex change
+        }//End For neighboring edges
 
-      } // End If vertex evaluated
+      } //End If vertex change
+
     } // End For vertex iteration
 
 
@@ -593,49 +590,29 @@ bool TLPAstar::perceiveChanges() {
     // Now go through the candidate edges, and check if it did change.
     for (std::vector<Edge>::iterator it = perceivedChangedEdges.begin() ; it != perceivedChangedEdges.end(); ++it)
     {
-
-      // Note that setting this NotEvaluated will make the returned edge value its length.
-      mGraph[*it].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-
-      // Collect all the vertices to update once
-      Vertex startVertex = source(*it, mGraph);
-
-      Vertex endVertex = target(*it, mGraph);
-
-      if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
+      // No need to insert if it is already unevaluated
+      if (mGraph[*it].getEvaluationStatus() != EvaluationStatus::NotEvaluated)
       {
-        verticesTobeUpdated.push_back(startVertex);
-        mGraph[startVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-      }
 
-      if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
-      {
-        verticesTobeUpdated.push_back(endVertex);
-        mGraph[endVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-      }
-      // // No need to insert if it is already unevaluated
-      // if (mGraph[*it].getEvaluationStatus() != EvaluationStatus::NotEvaluated)
-      // {
-      //
-      //   // Now is the time to evaluate
-      //   CollisionStatus previousEdgeColor = mGraph[*it].getCollisionStatus();
-      //   // Did it really change?
-      //   if (previousEdgeColor!=this->evaluateEdge(*it))
-      //   {
-      //     // yes, indeed this edge is different. Collect all the vertices to update once
-      //     Vertex startVertex = source(*it, mGraph);
-      //
-      //     Vertex endVertex = target(*it, mGraph);
-      //
-      //     if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
-      //     {verticesTobeUpdated.push_back(startVertex);}
-      //
-      //     if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
-      //     {verticesTobeUpdated.push_back(endVertex);}
-      //
-      //   } // End If edge changed
-      //
-      // }// End If previously evaluated
+        // Now is the time to evaluate
+        CollisionStatus previousEdgeColor = mGraph[*it].getCollisionStatus();
+        // Did it really change?
+        if (previousEdgeColor!=this->evaluateEdge(*it))
+        {
+          // yes, indeed this edge is different. Collect all the vertices to update once
+          Vertex startVertex = source(*it, mGraph);
+
+          Vertex endVertex = target(*it, mGraph);
+
+          if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
+          {verticesTobeUpdated.push_back(startVertex);}
+
+          if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
+          {verticesTobeUpdated.push_back(endVertex);}
+
+        } // End If edge changed
+
+      }// End If previously evaluated
     } // End For going through candidate edges
 
 
@@ -646,7 +623,7 @@ bool TLPAstar::perceiveChanges() {
       // Need this to properly update vertices
       this->clearTruncatedVertices();
 
-      int beforePerception =  static_cast<int>(mQueue.getSize());
+      std::cout << "Before perception : "<< mQueue.getSize() << std::endl;
       // Now update the vertices
       for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it) {
 
@@ -657,7 +634,7 @@ bool TLPAstar::perceiveChanges() {
         this->updateVertex(*it);
       }
 
-      std::cout << "ADDED " << static_cast<int>(mQueue.getSize())-beforePerception << " vertices into the queue" <<std::endl;
+      std::cout << "After perception " << mQueue.getSize() << " vertices into the queue" <<std::endl;
       // Okay, there is some change, we should re-solve it.
       isChanged = true;
 
