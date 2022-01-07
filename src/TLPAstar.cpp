@@ -250,6 +250,8 @@ ompl::base::PlannerStatus TLPAstar::solve(const ompl::base::PlannerTerminationCo
     this->computeGpi(mTargetVertex);
     this->setBestPathCost(mGraph[mTargetVertex].getGpi());
     pdef_->addSolutionPath(constructSolution(mSourceVertex, mTargetVertex));
+
+    OMPL_INFORM("Plan Found. %f", this->getBestPathCost());
     return ompl::base::PlannerStatus::EXACT_SOLUTION;
   } else {
     OMPL_INFORM("No Solution Found.");
@@ -371,13 +373,15 @@ void TLPAstar::computeShortestPath() {
       mGraph[s].setCostToCome(mGraph[s].getRHS());
       //std::cout << "Overconsistent! Make " << s << " consistent, update neighbors." << std::endl;
 
-      // Count the number of expansion
-      mNumberOfVertexExpansions++;
-
       // Now update the sucessor vertices
       NeighborIter ni, ni_end;
-      for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni)
-        this->updateVertex(*ni);
+      for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni) {
+        Vertex u = *ni;
+        this->updateVertex(u);
+      } // End for successor vertices
+
+      // Count the number of expansion
+      mNumberOfVertexExpansions++;
 
     } // if overconsistent
 
@@ -403,9 +407,12 @@ void TLPAstar::computeShortestPath() {
 
         // Now update the sucessor vertices
         NeighborIter ni, ni_end;
-        for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni)
-          this->updateVertex(*ni);
+        for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni) {
+          Vertex u = *ni;
+          this->updateVertex(u);
+        } // End for successor vertices
 
+        // Count the number of expansion
         mNumberOfVertexExpansions++;
       }//End else no truncation underconsistent case
 
@@ -586,29 +593,49 @@ bool TLPAstar::perceiveChanges() {
     // Now go through the candidate edges, and check if it did change.
     for (std::vector<Edge>::iterator it = perceivedChangedEdges.begin() ; it != perceivedChangedEdges.end(); ++it)
     {
-      // No need to insert if it is already unevaluated
-      if (mGraph[*it].getEvaluationStatus() != EvaluationStatus::NotEvaluated)
+
+      // Note that setting this NotEvaluated will make the returned edge value its length.
+      mGraph[*it].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+
+      // Collect all the vertices to update once
+      Vertex startVertex = source(*it, mGraph);
+
+      Vertex endVertex = target(*it, mGraph);
+
+      if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
       {
+        verticesTobeUpdated.push_back(startVertex);
+        mGraph[startVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+      }
 
-        // Now is the time to evaluate
-        CollisionStatus previousEdgeColor = mGraph[*it].getCollisionStatus();
-        // Did it really change?
-        if (previousEdgeColor!=this->evaluateEdge(*it))
-        {
-          // yes, indeed this edge is different. Collect all the vertices to update once
-          Vertex startVertex = source(*it, mGraph);
-
-          Vertex endVertex = target(*it, mGraph);
-
-          if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
-          {verticesTobeUpdated.push_back(startVertex);}
-
-          if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
-          {verticesTobeUpdated.push_back(endVertex);}
-
-        } // End If edge changed
-
-      }// End If previously evaluated
+      if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
+      {
+        verticesTobeUpdated.push_back(endVertex);
+        mGraph[endVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+      }
+      // // No need to insert if it is already unevaluated
+      // if (mGraph[*it].getEvaluationStatus() != EvaluationStatus::NotEvaluated)
+      // {
+      //
+      //   // Now is the time to evaluate
+      //   CollisionStatus previousEdgeColor = mGraph[*it].getCollisionStatus();
+      //   // Did it really change?
+      //   if (previousEdgeColor!=this->evaluateEdge(*it))
+      //   {
+      //     // yes, indeed this edge is different. Collect all the vertices to update once
+      //     Vertex startVertex = source(*it, mGraph);
+      //
+      //     Vertex endVertex = target(*it, mGraph);
+      //
+      //     if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
+      //     {verticesTobeUpdated.push_back(startVertex);}
+      //
+      //     if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
+      //     {verticesTobeUpdated.push_back(endVertex);}
+      //
+      //   } // End If edge changed
+      //
+      // }// End If previously evaluated
     } // End For going through candidate edges
 
 
