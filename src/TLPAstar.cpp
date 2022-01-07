@@ -643,6 +643,10 @@ bool TLPAstar::perceiveChanges() {
 
     if (!verticesTobeUpdated.empty()){
 
+      // Need this to properly update vertices
+      this->clearTruncatedVertices();
+
+      std::size_t beforePerception = mQueue.getSize();
       // Now update the vertices
       for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it) {
 
@@ -653,6 +657,7 @@ bool TLPAstar::perceiveChanges() {
         this->updateVertex(*it);
       }
 
+      std::cout << "ADDED " << mQueue.getSize()-beforePerception << "vertices into the queue" <<std::endl;
       // Okay, there is some change, we should re-solve it.
       isChanged = true;
 
@@ -661,7 +666,6 @@ bool TLPAstar::perceiveChanges() {
       pdef_->clearSolutionPaths();
     }
 
-    this->clearTruncatedVertices();
     return isChanged;
 }
 
