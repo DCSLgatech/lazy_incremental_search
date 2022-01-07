@@ -806,67 +806,74 @@ CollisionStatus TLPAstar::evaluateVertex(const Vertex& v) {
 // ============================================================================
 CollisionStatus TLPAstar::evaluateEdge(const Edge& e) {
 
-    auto tic = std::chrono::high_resolution_clock::now();
+  auto tic = std::chrono::high_resolution_clock::now();
 
-    mNumberOfEdgeEvaluations++;
+  mNumberOfEdgeEvaluations++;
 
-    // Be optimisitc about the edge.
-    CollisionStatus edgeColor = CollisionStatus::Free;
+  // Be optimisitc about the edge.
+  CollisionStatus edgeColor = CollisionStatus::Free;
 
-    // Collision check the start and goal.
-    Vertex startVertex = source(e, mGraph);
-    Vertex endVertex = target(e, mGraph);
-    auto startState = mGraph[startVertex].getState()->getOMPLState();
-    auto endState = mGraph[endVertex].getState()->getOMPLState();
+  // Collision check the start and goal.
+  Vertex startVertex = source(e, mGraph);
+  Vertex endVertex = target(e, mGraph);
+  auto startState = mGraph[startVertex].getState()->getOMPLState();
+  auto endState = mGraph[endVertex].getState()->getOMPLState();
 
-    // Evaluate start and end vertices first.
-    if (evaluateVertex(startVertex)==CollisionStatus::Collision
-        || evaluateVertex(endVertex)==CollisionStatus::Collision)
-    {
-      edgeColor =  CollisionStatus::Collision;
-    }
+  // Evaluate start and end vertices first.
+  if (evaluateVertex(startVertex)==CollisionStatus::Collision
+      || evaluateVertex(endVertex)==CollisionStatus::Collision)
+  {
+    edgeColor =  CollisionStatus::Collision;
+  }
 
-    // Proceed to the intermideate states, if passed the start and end vertices check
-    if (edgeColor != CollisionStatus::Collision)
-    {
-      // Access the validity checker.
-      auto validityChecker = si_->getStateValidityChecker();
+  if(!getSpaceInformation()->checkMotion(startState, endState))
+  {
+    // Okay, this motion is not valid (checkMotion uses si stateValidityChecker)
+    // Set value to infinty
+    edgeColor =  CollisionStatus::Collision;
+  }
 
-      // Evaluate the state in between.
-      int maxSteps = 1.0 / mCollisionCheckResolution;
-      for (int multiplier = 1; multiplier < maxSteps + 1; ++multiplier) {
-        double interpolationStep = mCollisionCheckResolution * multiplier;
-        assert(interpolationStep <= 1);
-        StatePtr midVertex(new lgls::datastructures::State(mSpace));
-        mSpace->interpolate(startState, endState, interpolationStep, midVertex->getOMPLState());
+  // // Proceed to the intermideate states, if passed the start and end vertices check
+  // if (edgeColor != CollisionStatus::Collision)
+  // {
+  //   // Access the validity checker.
+  //   auto validityChecker = si_->getStateValidityChecker();
+  //
+  //   // Evaluate the state in between.
+  //   int maxSteps = 1.0 / mCollisionCheckResolution;
+  //   for (int multiplier = 1; multiplier < maxSteps + 1; ++multiplier) {
+  //     double interpolationStep = mCollisionCheckResolution * multiplier;
+  //     assert(interpolationStep <= 1);
+  //     StatePtr midVertex(new lgls::datastructures::State(mSpace));
+  //     mSpace->interpolate(startState, endState, interpolationStep, midVertex->getOMPLState());
+  //
+  //     if (!validityChecker->isValid(midVertex->getOMPLState())){
+  //       edgeColor = CollisionStatus::Collision;
+  //       break; // No need to check further
+  //     }
+  //   } // End For interpolation
+  // } // End If passed start-end check
 
-        if (!validityChecker->isValid(midVertex->getOMPLState())){
-          edgeColor = CollisionStatus::Collision;
-          break; // No need to check further
-        }
-      } // End For interpolation
-    } // End If passed start-end check
 
+  // Now assign the edge value
+  double edgeValue;
+  if (edgeColor == CollisionStatus::Collision) {
+    edgeValue = std::numeric_limits<double>::infinity();
+  }
+  else {
+    edgeValue = mSpace->distance(startState, endState);
+  }
 
-    // Now assign the edge value
-    double edgeValue;
-    if (edgeColor == CollisionStatus::Collision) {
-      edgeValue = std::numeric_limits<double>::infinity();
-    }
-    else {
-      edgeValue = mSpace->distance(startState, endState);
-    }
+  // Actual assignment
+  mGraph[e].setCollisionStatus(edgeColor);
+  mGraph[e].setValue(edgeValue);
+  mGraph[e].setEvaluationStatus(EvaluationStatus::Evaluated);
 
-    // Actual assignment
-    mGraph[e].setCollisionStatus(edgeColor);
-    mGraph[e].setValue(edgeValue);
-    mGraph[e].setEvaluationStatus(EvaluationStatus::Evaluated);
+  auto toc = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(toc - tic);
+  mTotalEdgeEvaluationTime += time_span.count();
 
-    auto toc = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(toc - tic);
-    mTotalEdgeEvaluationTime += time_span.count();
-
-    return edgeColor;
+  return edgeColor;
 
 }
 
