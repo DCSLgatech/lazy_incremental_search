@@ -8,7 +8,7 @@
 #include <set>      // std::set
 #include <assert.h> // debug
 
-#include <Eigen/Geometry> // For generating samples in rotated frame 
+#include <Eigen/Geometry> // For generating samples in rotated frame
 #include <boost/graph/connected_components.hpp> // connected_components
 
 using lgls::datastructures::Keys;
@@ -586,27 +586,29 @@ bool TLPAstar::perceiveChanges() {
     // Now go through the candidate edges, and check if it did change.
     for (std::vector<Edge>::iterator it = perceivedChangedEdges.begin() ; it != perceivedChangedEdges.end(); ++it)
     {
+      // No need to insert if it is already unevaluated
+      if (mGraph[*it].getEvaluationStatus() != EvaluationStatus::NotEvaluated)
+      {
 
-          // Note that setting this NotEvaluated will make the returned edge value its length.
-          mGraph[*it].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-
-          // Collect all the vertices to update once
+        // Now is the time to evaluate
+        CollisionStatus previousEdgeColor = mGraph[*it].getCollisionStatus();
+        // Did it really change?
+        if (previousEdgeColor!=this->evaluateEdge(*it))
+        {
+          // yes, indeed this edge is different. Collect all the vertices to update once
           Vertex startVertex = source(*it, mGraph);
 
           Vertex endVertex = target(*it, mGraph);
 
           if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
-          {
-            verticesTobeUpdated.push_back(startVertex);
-            mGraph[startVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-          }
+          {verticesTobeUpdated.push_back(startVertex);}
 
           if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
-          {
-            verticesTobeUpdated.push_back(endVertex);
-            mGraph[endVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-          }
+          {verticesTobeUpdated.push_back(endVertex);}
 
+        } // End If edge changed
+
+      }// End If previously evaluated
     } // End For going through candidate edges
 
 
