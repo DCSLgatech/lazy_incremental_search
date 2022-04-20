@@ -1285,7 +1285,7 @@ void BLGLS::generateNewSamples(int batchSize, bool updateVertices) {
 }
 
 // ============================================================================
-void BLGLS::generateNewSamples(double sample_multiplier, double buffer, bool updateVertices) {
+void BLGLS::generateNewSamples(int batchSize, double buffer, bool updateVertices) {
 
   std::vector<double> sourcePosition;
   std::vector<double> targetPosition;
@@ -1312,9 +1312,6 @@ void BLGLS::generateNewSamples(double sample_multiplier, double buffer, bool upd
   double zmax = M_PI;
 
   // Sample points inside the space.
-  // int minBatchSize = 100;
-  // int batchSize = std::floor(sample_multiplier * euc_dist) > minBatchSize ? std::floor(sample_multiplier * euc_dist) : minBatchSize;
-  int batchSize = sample_multiplier*100;
 
   auto validityChecker = si_->getStateValidityChecker();
 

@@ -30,7 +30,7 @@ namespace lgls {
 
 enum TreeValidityStatus { Valid, NotValid };
 
-enum PlannerStatus { Solved, NotSolved };
+// enum PlannerStatus { Solved, NotSolved };
 
 /// The OMPL Planner class that implements the algorithm.
 class GLS : public ompl::base::Planner {

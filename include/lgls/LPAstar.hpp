@@ -33,7 +33,7 @@
 
 namespace lgls {
 
-enum PlannerStatus { Solved, NotSolved };
+// enum PlannerStatus { Solved, NotSolved };
 
 /// The OMPL Planner class that implements the algorithm.
 class LPAstar : public ompl::base::Planner {

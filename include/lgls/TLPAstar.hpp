@@ -42,7 +42,7 @@
 
 namespace lgls {
 
-enum PlannerStatus { Solved, NotSolved };
+// enum PlannerStatus { Solved, NotSolved };
 
 /// The OMPL Planner class that implements the algorithm.
 class TLPAstar : public ompl::base::Planner {
@@ -131,7 +131,9 @@ public:
   /// Sample a rectangle between start and goal using Halton sampling
   void generateNewSamples(int batchSize, bool updateVertices);
 
-  void generateNewSamples(double sample_multiplier, double buffer, bool updateVertices);
+  // void generateNewSamples(double sample_multiplier, double buffer, bool updateVertices);
+
+  void generateNewSamples(int batchSize, double buffer, bool updateVertices);
 
   /// Get current number of samples
   int getNumberOfVertices() {return  boost::num_vertices(mGraph);};
@@ -141,6 +143,12 @@ public:
 
   /// Get timing info
   double getAvgVertexExpTime() {return mTotalVertexExpansionTime/mNumberOfVertexExpansions;};
+
+  /// Get timing info
+  double getEdgeEvalTime() {return mTotalEdgeEvaluationTime;};
+
+  /// Get timing info
+  double getVertexExpTime() {return mTotalVertexExpansionTime;};
 
   /// For visuaization of graph
   lgls::datastructures::Graph getGraph(){return mGraph;};
