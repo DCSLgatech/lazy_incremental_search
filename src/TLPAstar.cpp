@@ -174,6 +174,27 @@ void TLPAstar::setupPreliminaries() {
 }
 
 // ============================================================================
+void TLPAstar::freshStart() {
+
+  // Call the base clear
+  ompl::base::Planner::clear();
+
+  // Clear the queues.
+  mQueue.clear();
+  assert(mQueue.isEmpty());
+
+  mTruncated.clear();
+  assert(mTruncated.empty());
+
+  knnGraph.clear();
+  mGraph.clear();
+  mNumberOfEdgeEvaluations = 0;
+  mNumberOfVertexExpansions = 0;
+  mPlannerStatus = PlannerStatus::NotSolved;
+  OMPL_INFORM("Removed Everything");
+}
+
+// ============================================================================
 void TLPAstar::clear() {
   // Call the base clear
   ompl::base::Planner::clear();
@@ -242,8 +263,8 @@ ompl::base::PlannerStatus TLPAstar::solve(const ompl::base::PlannerTerminationCo
   //OMPL_INFORM("TLPA* search completed.");
 
   // TODO : move these to PlannerData -- Report the timing average results
-  std::cout << "Average Time to evaluate an edge : " << mTotalEdgeEvaluationTime/mNumberOfEdgeEvaluations << " s" <<std::endl;
-  std::cout << "Average Time to exapnd a vertex : " << mTotalVertexExpansionTime/mNumberOfVertexExpansions << " s" <<std::endl;
+  // std::cout << "Average Time to evaluate an edge : " << mTotalEdgeEvaluationTime/mNumberOfEdgeEvaluations << " s" <<std::endl;
+  // std::cout << "Average Time to exapnd a vertex : " << mTotalVertexExpansionTime/mNumberOfVertexExpansions << " s" <<std::endl;
 
 
   if (mPlannerStatus == PlannerStatus::Solved) {
@@ -251,10 +272,10 @@ ompl::base::PlannerStatus TLPAstar::solve(const ompl::base::PlannerTerminationCo
     this->setBestPathCost(mGraph[mTargetVertex].getGpi());
     pdef_->addSolutionPath(constructSolution(mSourceVertex, mTargetVertex));
 
-    OMPL_INFORM("Plan Found. %f", this->getBestPathCost());
+    // OMPL_INFORM("Plan Found. %f", this->getBestPathCost());
     return ompl::base::PlannerStatus::EXACT_SOLUTION;
   } else {
-    OMPL_INFORM("No Solution Found.");
+    // OMPL_INFORM("No Solution Found.");
     return ompl::base::PlannerStatus::TIMEOUT;
   }
 }
@@ -329,24 +350,24 @@ void TLPAstar::computeShortestPath() {
 
     // check if the queue is empty.. which means graph has no connected path
     if (mQueue.isEmpty()){
-      OMPL_INFORM("No Path Exists in the graph");
-      std::cout << "Vertex Expanded: " << mNumberOfVertexExpansions
-        << ", Edge Evaluated: " << mNumberOfEdgeEvaluations
-        // << ", Queue Size: " <<  mQueue.getSize()
-        << std::endl;
+      // OMPL_INFORM("No Path Exists in the graph");
+      // std::cout << "Vertex Expanded: " << mNumberOfVertexExpansions
+      //   << ", Edge Evaluated: " << mNumberOfEdgeEvaluations
+      //   // << ", Queue Size: " <<  mQueue.getSize()
+      //   << std::endl;
       return;
     }
 
     // Pop front vertex from the queue
-    Vertex s = mQueue.popTopVertex();
+    // Vertex s = mQueue.popTopVertex();
 
     // Don't pop yet,
-    // Vertex s = mQueue.getTopVertex();
+    Vertex s = mQueue.getTopVertex();
     //std::cout << "Pop ";
     //printVertex(s);
 
     // Count the number of expansion
-    // mNumberOfVertexExpansions++;
+    mNumberOfVertexExpansions++;
 
     // Check truncated termination condition
     //std::cout << "T2: ";
@@ -355,7 +376,7 @@ void TLPAstar::computeShortestPath() {
     if (mGraph[mTargetVertex].getGpi() <= mTruncationFactor
           *(std::min(mGraph[s].getCostToCome(),mGraph[s].getRHS())+this->getGraphHeuristic(s) ) )
     {
-      std::cout << "T2! TLPA* terminated before expanding vertex " << s << std::endl;
+      // std::cout << "T2! TLPA* terminated before expanding vertex " << s << std::endl;
       // Vertex Expansion timer off before exit
       auto toc = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(toc - tic);
@@ -366,7 +387,7 @@ void TLPAstar::computeShortestPath() {
     }
 
     // Now remove the top vertex from the queue
-    // mQueue.removeVertex(s);
+    mQueue.removeVertex(s);
 
     if (mGraph[s].getCostToCome() > mGraph[s].getRHS()) {
       // Make it consistent
@@ -375,13 +396,12 @@ void TLPAstar::computeShortestPath() {
 
       // Now update the sucessor vertices
       NeighborIter ni, ni_end;
-      for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni) {
-        Vertex u = *ni;
-        this->updateVertex(u);
-      } // End for successor vertices
+      for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni)
+        this->updateVertex(*ni);
+
 
       // Count the number of expansion
-      mNumberOfVertexExpansions++;
+      // mNumberOfVertexExpansions++;
 
     } // if overconsistent
 
@@ -392,7 +412,7 @@ void TLPAstar::computeShortestPath() {
       if(mGraph[s].getGpi() + this->getGraphHeuristic(s)
          <= mTruncationFactor*(mGraph[s].getCostToCome()+this->getGraphHeuristic(s) ) )
       {
-        std::cout << "T1! Did not expand vertex " << s << std::endl;
+        // std::cout << "T1! Did not expand vertex " << s << std::endl;
         mTruncated.insert(s);
       }
       else
@@ -407,13 +427,11 @@ void TLPAstar::computeShortestPath() {
 
         // Now update the sucessor vertices
         NeighborIter ni, ni_end;
-        for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni) {
-          Vertex u = *ni;
-          this->updateVertex(u);
-        } // End for successor vertices
+        for (boost::tie(ni, ni_end) = adjacent_vertices(s, mGraph); ni != ni_end; ++ni)
+          this->updateVertex(*ni);
 
         // Count the number of expansion
-        mNumberOfVertexExpansions++;
+        // mNumberOfVertexExpansions++;
       }//End else no truncation underconsistent case
 
 
@@ -641,6 +659,91 @@ bool TLPAstar::perceiveChanges() {
 
     this->clearTruncatedVertices();
     return isChanged;
+}
+
+// ============================================================================
+void TLPAstar::induceChanges(int percent) {
+// Changes the length of given percentage edges
+
+  // Reset counters;
+  mNumberOfEdgeEvaluations=0;
+
+  mNumberOfVertexExpansions=0;
+
+  mTotalEdgeEvaluationTime=0;
+
+  mTotalVertexExpansionTime=0;
+
+  std::vector<Vertex> verticesTobeUpdated;
+
+  // So far, we have collected candidate edges that could have been changed.
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dist(0, 100);
+  // Now go through the candidate edges, and check if it did change.
+  int total_edge = 0;
+  int changed_edge = 0;
+  EdgeIter ei, ei_end;
+  for (boost::tie(ei, ei_end) = edges(mGraph); ei != ei_end; ++ei)
+  {
+    total_edge++;
+    if(dist(gen) > percent) continue;
+
+    changed_edge++;
+    // Now this edge should change.
+    if(dist(gen)>50)
+    {
+      mGraph[*ei].setLength(2*mGraph[*ei].getLength());
+    }
+    else
+    {
+      mGraph[*ei].setLength(0.5*mGraph[*ei].getLength());
+    }
+
+    // Note that setting this NotEvaluated will make the returned edge value its length.
+    mGraph[*ei].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+
+    // Collect all the vertices to update once
+    Vertex startVertex = source(*ei, mGraph);
+
+    Vertex endVertex = target(*ei, mGraph);
+
+    if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
+    {
+      verticesTobeUpdated.push_back(startVertex);
+      mGraph[startVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+    }
+
+    if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
+    {
+      verticesTobeUpdated.push_back(endVertex);
+      mGraph[endVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+    }
+
+  } // End For going through candidate edges
+
+  std::cout << changed_edge << "/" << total_edge << " edges changed."<< std::endl;
+  std::cout <<  verticesTobeUpdated.size() <<" vertices to be updated" << std::endl;
+
+  if (!verticesTobeUpdated.empty()){
+
+    // Now update the vertices
+    for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it) {
+
+      // Important : Make sure if the source Vertex is changed, then make it inconsistent
+      if (*it == mSourceVertex) mGraph[*it].setCostToCome(std::numeric_limits<double>::infinity());
+
+      // Assert that all changed edges are evaluated.
+      this->updateVertex(*it);
+    }
+
+    mPlannerStatus = PlannerStatus::NotSolved;
+
+    pdef_->clearSolutionPaths();
+  }
+
+  this->clearTruncatedVertices();
+
 }
 
 // ============================================================================
@@ -951,8 +1054,8 @@ void TLPAstar::generateNewSamples(int batchSize, bool updateVertices) {
     auto validityChecker = si_->getStateValidityChecker();
 
     // only for static environment, we don't want to discard possible vertices for dynamic env
-    if(!validityChecker->isValid(sampledState->getOMPLState()))
-      continue;
+    // if(!validityChecker->isValid(sampledState->getOMPLState()))
+    //   continue;
 
     // Since we have a valid sample, increment the numSampled.
     numSampled++;
@@ -964,6 +1067,16 @@ void TLPAstar::generateNewSamples(int batchSize, bool updateVertices) {
     mGraph[sampleVertex].setCollisionStatus(CollisionStatus::Free);
     // Do we need to assign default values?
 
+    knnGraph.nearestK(sampleVertex, mKNeighbors, nearestSamples);
+    for (const auto& v : nearestSamples) {
+        double distance = mSpace->distance(
+            mGraph[sampleVertex].getState()->getOMPLState(), mGraph[v].getState()->getOMPLState());
+        std::pair<Edge, bool> newEdge = boost::add_edge(sampleVertex, v, mGraph);
+        mGraph[newEdge.first].setLength(distance);
+        mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+        assert(newEdge.second);
+    }
+
     // Now add to the graph
     knnGraph.add(sampleVertex);
     verticesTobeUpdated.push_back(sampleVertex);
@@ -971,29 +1084,29 @@ void TLPAstar::generateNewSamples(int batchSize, bool updateVertices) {
   } // End while a batch is sampled.
 
   // Update radius
-  double connectionRadius = this->calculateR();
+  // double connectionRadius = this->calculateR();
   // std::cout << "current Connection Raidus: " << connectionRadius << std::endl;
 
   // Now Connect edges
-  for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it)
-  {
-    // Collect near samples
-    nearestSamples.clear();
-    knnGraph.nearestR(*it, connectionRadius, nearestSamples);
-    // std::cout << "connecting "<<*it << " with: ";
-    for (const auto& v : nearestSamples) {
-      if(*it==v) continue;
-      // std::cout << v << ", ";
-      double distance = mSpace->distance(
-          mGraph[v].getState()->getOMPLState(), mGraph[*it].getState()->getOMPLState());
-      std::pair<Edge, bool> newEdge = boost::add_edge(*it, v, mGraph);
-      mGraph[newEdge.first].setLength(distance);
-      mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-      assert(newEdge.second);
-    }
-    // std::cout << std::endl;
-
-  }
+  // for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it)
+  // {
+  //   // Collect near samples
+  //   nearestSamples.clear();
+  //   knnGraph.nearestR(*it, connectionRadius, nearestSamples);
+  //   // std::cout << "connecting "<<*it << " with: ";
+  //   for (const auto& v : nearestSamples) {
+  //     if(*it==v) continue;
+  //     // std::cout << v << ", ";
+  //     double distance = mSpace->distance(
+  //         mGraph[v].getState()->getOMPLState(), mGraph[*it].getState()->getOMPLState());
+  //     std::pair<Edge, bool> newEdge = boost::add_edge(*it, v, mGraph);
+  //     mGraph[newEdge.first].setLength(distance);
+  //     mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+  //     assert(newEdge.second);
+  //   }
+  //   // std::cout << std::endl;
+  //
+  // }
 
   // Update newly added vertices
   if (updateVertices)
@@ -1009,7 +1122,7 @@ void TLPAstar::generateNewSamples(int batchSize, bool updateVertices) {
   }
 
   this->clearTruncatedVertices();
-  OMPL_INFORM("A new batch of %d samples generated",batchSize);
+  // OMPL_INFORM("A new batch of %d samples generated",batchSize);
 }
 
 // ============================================================================

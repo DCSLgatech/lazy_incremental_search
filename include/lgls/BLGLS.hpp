@@ -159,6 +159,9 @@ public:
   /// Identify all changed vertices and update their edges, then updateVertex
   bool perceiveChanges();
 
+  /// Change the legnth of given percentage edges
+  void induceChanges(int percentage);
+
   /// Sample a rectangle between start and goal using Halton sampling
   void generateNewSamples(int batchSize, bool updateVertices);
 

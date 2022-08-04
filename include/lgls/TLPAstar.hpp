@@ -71,6 +71,8 @@ public:
   /// Clear the planner setup.
   void clear() override;
 
+  void freshStart();
+  
   /// Set the K neighbors for all nodes.
   void setKNeighbors(int num_neighbors);
 
@@ -127,6 +129,9 @@ public:
 
   /// Identify all changed vertices and update their edges, then updateVertex
   bool perceiveChanges();
+
+  /// Change the legnth of given percentage edges
+  void induceChanges(int percentage);
 
   /// Sample a rectangle between start and goal using Halton sampling
   void generateNewSamples(int batchSize, bool updateVertices);

@@ -288,7 +288,7 @@ ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondi
       else if (triggeredLeaf == mTargetVertex)
       {
         // NO inconsistent edge is found,
-        OMPL_INFORM("No inconsistent edge found. Solved!");
+        // OMPL_INFORM("No inconsistent edge found. Solved!");
         mPlannerStatus = PlannerStatus::Solved;
         break;
       }
@@ -296,7 +296,7 @@ ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondi
     } else
     {
       // No triggering vertex exists
-      OMPL_INFORM("No Trigerring Vertex Exists in the graph");
+      // OMPL_INFORM("No Trigerring Vertex Exists in the graph");
       // std::cout << "Vertex Expanded: " << mNumberOfVertexExpansions
       //   << ", Edge Evaluated: "<< mNumberOfEdgeEvaluations
       //   << ", Queue Size: " <<  mQueue.getSize() << std::endl;
@@ -312,14 +312,14 @@ ompl::base::PlannerStatus BLGLS::solve(const ompl::base::PlannerTerminationCondi
     this->setBestPathCost(mGraph[mTargetVertex].getGpi());
     pdef_->addSolutionPath(constructSolution(mSourceVertex, mTargetVertex));
 
-    OMPL_INFORM("Plan Found. %f", this->getBestPathCost());
+    // OMPL_INFORM("Plan Found. %f", this->getBestPathCost());
     return ompl::base::PlannerStatus::EXACT_SOLUTION;
   }
   if (mPreempt) {
-    OMPL_INFORM("Planning Aborted.");
+    // OMPL_INFORM("Planning Aborted.");
     return ompl::base::PlannerStatus::ABORT;
   }
-  OMPL_INFORM("Planning TIMEOUT.");
+  // OMPL_INFORM("Planning TIMEOUT.");
   return ompl::base::PlannerStatus::TIMEOUT;
 }
 
@@ -384,20 +384,21 @@ bool BLGLS::computeShortestPath(Vertex& triggeredLeafVertex) {
     auto tic = std::chrono::high_resolution_clock::now();
 
     if (mQueue.isEmpty()){
-      OMPL_INFORM("Queue is emptied");
-      std::cout << "Vertex Expanded: " << mNumberOfVertexExpansions
-        << ", Edge Evaluated: "<< mNumberOfEdgeEvaluations
-        << ", Queue Size: " <<  mQueue.getSize() << std::endl;
+      // OMPL_INFORM("Queue is emptied");
+      // std::cout << "Vertex Expanded: " << mNumberOfVertexExpansions
+      //   << ", Edge Evaluated: "<< mNumberOfEdgeEvaluations
+      //   << ", Queue Size: " <<  mQueue.getSize() << std::endl;
       return false;
     }
 
     // Pop front vertex from the queue
-    Vertex s = mQueue.popTopVertex();
-    // Vertex s = mQueue.getTopVertex();
+    // Vertex s = mQueue.popTopVertex();
+    Vertex s = mQueue.getTopVertex();
 
+    // std::cout << "poped, compute Gpi of target now...: " << std::endl;
     // Compute Gpi of the goal vertex
     this->computeGpi(mTargetVertex);
-
+    // std::cout << "T2: " << std::endl;
     // Second truncation rule check
     // -- is the current path length already bounded subopitmal?
     if (mGraph[mTargetVertex].getGpi() <= mTruncationFactor
@@ -413,8 +414,8 @@ bool BLGLS::computeShortestPath(Vertex& triggeredLeafVertex) {
       return true;
     }
 
-    // mQueue.removeVertex(s);
-
+    mQueue.removeVertex(s);
+    // std::cout << "removed top vertex: " << std::endl;
     // Is it overconsistent?
     if (mGraph[s].getCostToCome() >mGraph[s].getRHS() ) {
 
@@ -431,6 +432,9 @@ bool BLGLS::computeShortestPath(Vertex& triggeredLeafVertex) {
       // Count the number of expansion
       mNumberOfVertexExpansions++;
 
+      // std::cout << "checking event : " << std::endl;
+
+      computeGpi(s);
       // After making it consistent, check if this triggers event
       if( !std::isinf(mGraph[s].getGpi()) && mEvent->isTriggered(obtainPath(s)) ) {
         triggeredLeafVertex = s;
@@ -442,15 +446,25 @@ bool BLGLS::computeShortestPath(Vertex& triggeredLeafVertex) {
 
         return true;
       }// No else, continue repairing.
-
-
+      // if( mEvent->isTriggered(obtainPath(s)) ) {
+      //   triggeredLeafVertex = s;
+      //
+      //   // Vertex Expansion timer off before exit
+      //   auto toc = std::chrono::high_resolution_clock::now();
+      //   std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(toc - tic);
+      //   mTotalVertexExpansionTime += time_span.count();
+      //
+      //   return true;
+      // }// No else, continue repairing.
+      // std::cout << "event checked: " << std::endl;
     }
     else {
       // Otherwise it is underconsistent, since no consistent vertices are in the queue (TLPA* Lemma2)
 
       // Compute ObtainPath of s
+      // std::cout << "computing Gpi: "<< std::endl;
       this->computeGpi(s);
-
+      // std::cout << "T1: "<< std::endl;
       // First truncation rule check for underconsistent vertex
       if(mGraph[s].getGpi() + this->getGraphHeuristic(s)
          <= mTruncationFactor*(mGraph[s].getCostToCome()+this->getGraphHeuristic(s) ) )
@@ -493,7 +507,8 @@ bool BLGLS::computeShortestPath(Vertex& triggeredLeafVertex) {
   triggeredLeafVertex = mTargetVertex;
   this->computeGpi(triggeredLeafVertex);
 
-  if ( !std::isinf(mGraph[triggeredLeafVertex].getGpi()) )
+  // if ( !std::isinf(mGraph[triggeredLeafVertex].getGpi()) )
+  if (mGraph[triggeredLeafVertex].getGpi()<std::numeric_limits<double>::infinity())
   {
       return true;
   }
@@ -659,7 +674,7 @@ void BLGLS::perceiveNewWorld() {
   OMPL_INFORM("First time world is seen");
 }
 
-
+// ============================================================================
 bool BLGLS::perceiveChanges() {
 
   // Hope no changes
@@ -824,6 +839,90 @@ bool BLGLS::perceiveChanges() {
  // return isChanged;
 }
 
+// ============================================================================
+void BLGLS::induceChanges(int percent) {
+// Changes the length of given percentage edges
+
+  // Reset counters;
+  mNumberOfEdgeEvaluations=0;
+
+  mNumberOfVertexExpansions=0;
+
+  mTotalEdgeEvaluationTime=0;
+
+  mTotalVertexExpansionTime=0;
+
+  std::vector<Vertex> verticesTobeUpdated;
+
+  // So far, we have collected candidate edges that could have been changed.
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dist(0, 100);
+  // Now go through the candidate edges, and check if it did change.
+  int total_edge = 0;
+  int changed_edge = 0;
+  EdgeIter ei, ei_end;
+  for (boost::tie(ei, ei_end) = edges(mGraph); ei != ei_end; ++ei)
+  {
+    total_edge++;
+    if(dist(gen) > percent) continue;
+
+    changed_edge++;
+    // Now this edge should change.
+    if(dist(gen)>50)
+    {
+      mGraph[*ei].setLength(2*mGraph[*ei].getLength());
+    }
+    else
+    {
+      mGraph[*ei].setLength(0.5*mGraph[*ei].getLength());
+    }
+
+    // Note that setting this NotEvaluated will make the returned edge value its length.
+    mGraph[*ei].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+
+    // Collect all the vertices to update once
+    Vertex startVertex = source(*ei, mGraph);
+
+    Vertex endVertex = target(*ei, mGraph);
+
+    if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), startVertex) == verticesTobeUpdated.end())
+    {
+      verticesTobeUpdated.push_back(startVertex);
+      mGraph[startVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+    }
+
+    if (std::find(verticesTobeUpdated.begin(), verticesTobeUpdated.end(), endVertex) == verticesTobeUpdated.end())
+    {
+      verticesTobeUpdated.push_back(endVertex);
+      mGraph[endVertex].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+    }
+
+  } // End For going through candidate edges
+
+  std::cout << changed_edge << "/" << total_edge << " edges changed."<< std::endl;
+  std::cout <<  verticesTobeUpdated.size() <<" vertices to be updated" << std::endl;
+
+  if (!verticesTobeUpdated.empty()){
+
+    // Now update the vertices
+    for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it) {
+
+      // Important : Make sure if the source Vertex is changed, then make it inconsistent
+      if (*it == mSourceVertex) mGraph[*it].setCostToCome(std::numeric_limits<double>::infinity());
+
+      // Assert that all changed edges are evaluated.
+      this->updateVertex(*it);
+    }
+
+    mPlannerStatus = PlannerStatus::NotSolved;
+
+    pdef_->clearSolutionPaths();
+  }
+
+  this->clearTruncatedVertices();
+
+}
 
 // ============================================================================
 void BLGLS::setEvent(EventPtr event) {
@@ -1223,8 +1322,8 @@ void BLGLS::generateNewSamples(int batchSize, bool updateVertices) {
     // ================= Check validity   ====================//
     auto validityChecker = si_->getStateValidityChecker();
 
-    if(!validityChecker->isValid(sampledState->getOMPLState()))
-      continue;
+    // if(!validityChecker->isValid(sampledState->getOMPLState()))
+    //   continue;
 
     // Since we have a valid sample, increment the numSampled.
     numSampled++;
@@ -1236,6 +1335,16 @@ void BLGLS::generateNewSamples(int batchSize, bool updateVertices) {
     mGraph[sampleVertex].setCollisionStatus(CollisionStatus::Free);
     // Do we need to assign default values?
 
+    knnGraph.nearestK(sampleVertex, mKNeighbors, nearestSamples);
+    for (const auto& v : nearestSamples) {
+        double distance = mSpace->distance(
+            mGraph[sampleVertex].getState()->getOMPLState(), mGraph[v].getState()->getOMPLState());
+        std::pair<Edge, bool> newEdge = boost::add_edge(sampleVertex, v, mGraph);
+        mGraph[newEdge.first].setLength(distance);
+        mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+        assert(newEdge.second);
+    }
+
     // Now add to the graph
     knnGraph.add(sampleVertex);
     verticesTobeUpdated.push_back(sampleVertex);
@@ -1243,29 +1352,29 @@ void BLGLS::generateNewSamples(int batchSize, bool updateVertices) {
   } // End while a batch is sampled.
 
   // Update radius
-  double connectionRadius = this->calculateR();
+  // double connectionRadius = this->calculateR();
   // std::cout << "current Connection Raidus: " << connectionRadius << std::endl;
 
   // Now Connect edges
-  for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it)
-  {
-    // Collect near samples
-    nearestSamples.clear();
-    knnGraph.nearestR(*it, connectionRadius, nearestSamples);
-    // std::cout << "connecting "<<*it << " with: ";
-    for (const auto& v : nearestSamples) {
-      if(*it==v) continue;
-      // std::cout << v << ", ";
-      double distance = mSpace->distance(
-          mGraph[v].getState()->getOMPLState(), mGraph[*it].getState()->getOMPLState());
-      std::pair<Edge, bool> newEdge = boost::add_edge(*it, v, mGraph);
-      mGraph[newEdge.first].setLength(distance);
-      mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
-      assert(newEdge.second);
-    }
-    // std::cout << std::endl;
-
-  }
+  // for (std::vector<Vertex>::iterator it = verticesTobeUpdated.begin() ; it != verticesTobeUpdated.end(); ++it)
+  // {
+  //   // Collect near samples
+  //   nearestSamples.clear();
+  //   knnGraph.nearestR(*it, connectionRadius, nearestSamples);
+  //   // std::cout << "connecting "<<*it << " with: ";
+  //   for (const auto& v : nearestSamples) {
+  //     if(*it==v) continue;
+  //     // std::cout << v << ", ";
+  //     double distance = mSpace->distance(
+  //         mGraph[v].getState()->getOMPLState(), mGraph[*it].getState()->getOMPLState());
+  //     std::pair<Edge, bool> newEdge = boost::add_edge(*it, v, mGraph);
+  //     mGraph[newEdge.first].setLength(distance);
+  //     mGraph[newEdge.first].setEvaluationStatus(EvaluationStatus::NotEvaluated);
+  //     assert(newEdge.second);
+  //   }
+  //   // std::cout << std::endl;
+  //
+  // }
 
   // Update newly added vertices
   if (updateVertices)
@@ -1281,7 +1390,7 @@ void BLGLS::generateNewSamples(int batchSize, bool updateVertices) {
   }
 
   this->clearTruncatedVertices();
-  OMPL_INFORM("A new batch of %d samples generated",batchSize);
+  // OMPL_INFORM("A new batch of %d samples generated",batchSize);
 }
 
 // ============================================================================
